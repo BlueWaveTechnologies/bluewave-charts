@@ -1,0 +1,48 @@
+html, body {
+    width:100%;
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+}
+
+
+body, textarea, input, select, td, th {
+    font-family:helvetica,arial,verdana,sans-serif; font-size:14px;
+}
+
+h1 {
+    margin: 10px;
+}
+
+h2 {
+    font-size:18px;
+    font-weight: normal;
+    margin: 35px 0 0 0;
+}
+
+p {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    color: #555555;
+}
+
+
+.demo-container{
+    font-size: 20;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: whitesmoke;
+}
+
+.chart-window{
+    width: 500px;
+    height: 250px;
+    margin-top: 25px;
+    margin-bottom: 100px;
+}
+
+.grid{
+    stroke-width: 0.2;
+}
