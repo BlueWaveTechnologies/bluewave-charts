@@ -1,0 +1,162 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+<title>Bar Graph Demo</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<link  href="style.css" rel="stylesheet" type="text/css" />
+
+
+<!-- JavaXT Includes -->
+<script type="text/javascript" src="https://www.javaxt.com/downloads/javaxt-webcontrols/javaxt.js"></script>
+
+<!-- D3 Includes -->
+<script src="https://d3js.org/d3.v5.min.js"></script>
+
+<script type="text/javascript" src="../src/BarChart.js"></script>
+<script type="text/javascript" src="../src/Utils.js"></script>
+
+</head>
+
+
+<body>
+    
+    <h1>Bar Graph Demos</h1>
+
+    <div class="demo-container">
+        <p>Bar graph with simulated time series data</p>
+        <div id="demo1" class="chart-window"></div>
+        <p>Horizontal Bar Chart</p>
+        <div id="demo2" class="chart-window"></div>
+        <p>Grouped Bar Chart</p>
+        <div id="demo3" class="chart-window"></div>
+        <p>Stacked Bar Chart</p>
+        <div id="demo4" class="chart-window"></div>
+        <!-- <div id="demo5" class="chart-window"></div> -->
+    </div>
+    
+    
+    <script type="text/javascript">
+
+    var religionData = "country,religion,population\n" + "China,Christian,68410000\n" + "China,Muslim,24690000\n" + "China,Unaffiliated,700680000\n" + "China,Hindu,20000\n" + "China,Buddhist,244130000\n" + "China,Folk Religions,294320000\n" + "China,Other Religions,9080000\n" + "China,Jewish,0\n" + "India,Christian,31130000\n" + "India,Muslim,176190000\n" + "India,Unaffiliated,870000\n" + "India,Hindu,973750000\n" + "India,Buddhist,9250000\n" + "India,Folk Religions,5840000\n" + "India,Other Religions,27560000\n" + "India,Jewish,10000\n" + "United States,Christian,243060000\n" + "United States,Muslim,2770000\n" + "United States,Unaffiliated,50980000\n" + "United States,Hindu,1790000\n" + "United States,Buddhist,3570000\n" + "United States,Folk Religions,630000\n" + "United States,Other Religions,1900000\n" + "United States,Jewish,5690000\n" + "Indonesia,Christian,23660000\n" + "Indonesia,Muslim,209120000\n" + "Indonesia,Unaffiliated,240000\n" + "Indonesia,Hindu,4050000\n" + "Indonesia,Buddhist,1720000\n" + "Indonesia,Folk Religions,750000\n" + "Indonesia,Other Religions,340000\n" + "Indonesia,Jewish,0\n" + "Brazil,Christian,173300000\n" + "Brazil,Muslim,40000\n" + "Brazil,Unaffiliated,15410000\n" + "Brazil,Hindu,0\n" + "Brazil,Buddhist,250000\n" + "Brazil,Folk Religions,5540000\n" + "Brazil,Other Religions,300000\n" + "Brazil,Jewish,110000\n" + "Pakistan,Christian,2750000\n" + "Pakistan,Muslim,167410000\n" + "Pakistan,Unaffiliated,20000\n" + "Pakistan,Hindu,3330000\n" + "Pakistan,Buddhist,20000\n" + "Pakistan,Folk Religions,30000\n" + "Pakistan,Other Religions,20000\n" + "Pakistan,Jewish,0\n";
+    var histogramData = [{"date":"4/1854","total":8571,"disease":1,"wounds":0,"other":5},{"date":"5/1854","total":23333,"disease":12,"wounds":0,"other":9},{"date":"6/1854","total":28333,"disease":11,"wounds":0,"other":6},{"date":"7/1854","total":28772,"disease":359,"wounds":0,"other":23},{"date":"8/1854","total":30246,"disease":828,"wounds":1,"other":30},{"date":"9/1854","total":30290,"disease":788,"wounds":81,"other":70},{"date":"10/1854","total":30643,"disease":503,"wounds":132,"other":128},{"date":"11/1854","total":29736,"disease":844,"wounds":287,"other":106},{"date":"12/1854","total":32779,"disease":1725,"wounds":114,"other":131},{"date":"1/1855","total":32393,"disease":2761,"wounds":83,"other":324},{"date":"2/1855","total":30919,"disease":2120,"wounds":42,"other":361},{"date":"3/1855","total":30107,"disease":1205,"wounds":32,"other":172},{"date":"4/1855","total":32252,"disease":477,"wounds":48,"other":57},{"date":"5/1855","total":35473,"disease":508,"wounds":49,"other":37},{"date":"6/1855","total":38863,"disease":802,"wounds":209,"other":31},{"date":"7/1855","total":42647,"disease":382,"wounds":134,"other":33},{"date":"8/1855","total":44614,"disease":483,"wounds":164,"other":25},{"date":"9/1855","total":47751,"disease":189,"wounds":276,"other":20},{"date":"10/1855","total":46852,"disease":128,"wounds":53,"other":18},{"date":"11/1855","total":37853,"disease":178,"wounds":33,"other":32},{"date":"12/1855","total":43217,"disease":91,"wounds":18,"other":28},{"date":"1/1856","total":44212,"disease":42,"wounds":2,"other":48},{"date":"2/1856","total":43485,"disease":24,"wounds":0,"other":19},{"date":"3/1856","total":46140,"disease":15,"wounds":0,"other":35}];
+
+    var demo1 = function(){
+    
+        var parent = document.getElementById("demo1");
+        var barChart = new bluewave.charts.BarChart(parent, {});
+    
+        var dates =
+        "date,value\n"+
+        "1/10/2022,3\n"+
+        "1/11/2022,1\n"+
+        "1/12/2022,7\n"+
+        "1/23/2022,3\n"+
+        "3/30/2022,4\n";
+
+        var config = {
+            
+            xAxis: "date",
+            yAxis: "value",
+
+            xLabel: "date",
+            yLabel: "value",
+
+        };
+
+        data = d3.csvParse(dates);
+  
+        barChart.update(config, [data]);
+        
+    };
+
+    var demo2 = function(){
+
+        var data = 
+        "group,Nitrogen,normal,stress\n"+
+        "banana,12,1,13\n"+
+        "poacee,6,6,33\n"+
+        "sorgho,11,28,12\n"+
+        "triticum,19,6,1\n";
+
+        var parent = document.getElementById("demo2");
+        
+        var barChart = new bluewave.charts.BarChart(parent, {});
+
+        var config = {
+            xAxis: "group",
+            yAxis: "normal",
+            layout: "horizontal",
+        };
+
+        barChart.update(config, [d3.csvParse(data)])
+
+    }
+
+    var demo3 = function(){
+        
+        var data = d3.csvParse(religionData);
+        var parent = document.getElementById("demo3");
+        var barChart = new bluewave.charts.BarChart(parent, {});
+
+        var config = {
+            xAxis: "country",
+            yAxis: "population",
+            group: "religion",
+            colors: d3.schemeTableau10
+        };
+
+        barChart.update(config, [data])
+    }
+
+    var demo4 = function(){
+        
+
+        var data = d3.csvParse(religionData);
+
+        var parent = document.getElementById("demo4");
+        var barChart = new bluewave.charts.BarChart(parent, {});
+
+        var config = {
+            xAxis: "country",
+            yAxis: "population",
+            group: "religion",
+            colors: d3.schemeTableau10,
+            stackValues: true
+            
+        };
+
+        barChart.update(config, [data])
+    }
+
+    // var demo5 = function(){
+        
+    //     var data = histogramData;
+
+    //     var parent = document.getElementById("demo5");
+    //     var barChart = new bluewave.charts.BarChart(parent, {});
+
+    //     var config = {
+    //         xAxis: "total",
+    //         yAxis: "total",
+    //         barType: "histogram"
+    //     };
+
+    //     barChart.update(config, [data])
+    // }
+
+
+    </script>
+
+    <script>
+        demo1();
+        demo2();
+        demo3();
+        demo4();
+        // demo5();
+    </script>
+
+</body>
