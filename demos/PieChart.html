@@ -1,0 +1,95 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+    <title>Pie Chart Demo</title>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link href="style.css" rel="stylesheet" type="text/css" />
+
+
+    <!-- JavaXT Includes -->
+    <script type="text/javascript" src="https://www.javaxt.com/downloads/javaxt-webcontrols/javaxt.js"></script>
+
+    <!-- D3 Includes -->
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+
+    <script type="text/javascript" src="../src/PieChart.js"></script>
+    <script type="text/javascript" src="../src/Utils.js"></script>
+
+</head>
+
+
+<body>
+
+    <h1>Pie Demos</h1>
+
+
+    <div class="demo-container">
+        <p>Simple Pie Chart</p>
+        <div id="demo1" class="chart-window"></div>
+        <p>Donut Chart</p>
+        <div id="demo2" class="chart-window"></div>
+    </div>
+
+
+    <script type="text/javascript">
+
+        var dates =
+            "date,value\n" +
+            "10/2022,3\n" +
+            "11/2022,1\n" +
+            "12/2022,6\n" +
+            "13/2022,3\n" +
+            "14/2022,4\n";
+
+        var demo1 = function () {
+
+            var parent = document.getElementById("demo1");
+            var pieChart = new bluewave.charts.PieChart(parent, {});
+
+
+            var config = {
+
+                pieKey: "date",
+                pieValue: "value",
+                pieCutout: 0,
+            };
+
+            var data = d3.csvParse(dates);
+
+            pieChart.update(config, [data]);
+
+        };
+
+        var demo2 = function () {
+
+            var parent = document.getElementById("demo2");
+            var pieChart = new bluewave.charts.PieChart(parent, {});
+
+
+            var config = {
+
+                pieKey: "date",
+                pieValue: "value",
+                pieCutout: 0.5,
+                labelOffset: 150
+            };
+
+            var data = d3.csvParse(dates);
+
+            pieChart.update(config, [data]);
+
+        };
+        
+    </script>
+
+    <script>
+        demo1();
+        demo2();
+    </script>
+
+</body>
