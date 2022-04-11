@@ -1,0 +1,59 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+    <title>Map Demo</title>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link href="style.css" rel="stylesheet" type="text/css" />
+
+
+    <!-- JavaXT Includes -->
+    <script type="text/javascript" src="https://www.javaxt.com/downloads/javaxt-webcontrols/javaxt.js"></script>
+
+    <!-- D3 Includes -->
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+
+    <script type="text/javascript" src="../src/MapChart.js"></script>
+    <script type="text/javascript" src="../src/Utils.js"></script>
+
+</head>
+
+
+<body>
+
+    <h1>Map Demos</h1>
+
+
+    <div class="demo-container">
+        <p>Map Chart</p>
+        <div id="demo1" class="chart-window"></div>
+    </div>
+
+
+    <script type="text/javascript">
+
+        var demo1 = function () {
+
+            var parent = document.getElementById("demo1");
+            var map = new bluewave.charts.MapChart(parent, {});
+
+            var chartConfig = {
+            "backgroundColor": "fff",
+            "landColor": "#DEDDE0",
+            }
+
+
+            // map.update(chartConfig, data);
+
+        };
+
+
+        demo1();
+        
+    </script>
+
+</body>
