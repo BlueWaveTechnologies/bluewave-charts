@@ -43,6 +43,10 @@ p {
     margin-bottom: 100px;
 }
 
+.map-window{
+    width: 50%;
+}
+
 .grid{
     stroke-width: 0.2;
 }
