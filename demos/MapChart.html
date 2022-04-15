@@ -34,16 +34,138 @@
 
     <div class="demo-container">
         <p>Simple World Map</p>
-        <div id="demo1" class="map-window"></div>
+        <div class="demo-row">
+            <div id="demo1" class="chart-window"></div>
+            <pre>
+var chartConfig = {
+    style: {
+        backgroundColor: "#006994",
+    }
+}
+    
+var map = new bluewave.charts.MapChart(parent, chartConfig);
+map.addPolygons(countries.features, {
+    name: "countries",
+    style: {
+        fill: "#bbdaa4"
+    
+    }
+})
+    
+map.update();</pre>
+        </div>
         <p>Map Chart</p>
-        <div id="demo2" class="map-window"></div>
+        <div class="demo-row">
+            <div id="demo2" class="chart-window"></div>
+            <pre>
+var map = new bluewave.charts.MapChart(parent, {});
+
+//Set extent to US
+map.setExtent([-130, 50.5], [-65, 25.8])
+    
+map.addPolygons(countries.features, {
+    name: "countries",
+    style: {
+        
+    }
+});
+    
+map.addPoints(pointData.features, {
+    name: "protectedAreas",
+    style: {
+        fill: "steelblue",
+        opacity: 0.8,
+        radius: 3,
+    }
+});
+    
+    
+map.update();</pre>
+        </div>
         <p>Linked Points</p>
-        <div id="demo3" class="map-window"></div>
+        <div class="demo-row">
+            <div id="demo3" class="chart-window"></div>
+            <pre>
+var map = new bluewave.charts.MapChart(parent, chartConfig);
+//Mumbai to Bali
+map.setExtent([70, 19], [120, -8.4])
+    
+map.addPolygons(countries.features, {
+    name: "countries",
+    style: {
+        // fill: "#bbdaa4"
+    
+    }
+})
+    
+var points = [[0, 52], [4, 51], [-4.25, 55.9], 
+[14.4, 50], [116, 40], [-105, -20], [72.9, 19], 
+[115, -8.4]];
+
+map.addPoints(points, {
+    name: "cities",
+    style: {
+        fill: "steelblue",
+        opacity: 0.8,
+        radius: 10,
+    }
+});
+    
+var tuples = [[[0, 52], [4, 51]], [[-4.25, 55.9], [14.4, 50]], 
+[[116, 40], [-105, -20]], [[72.9, 19], [115, -8.4]], 
+[[-122.3, 47.6], [-80.2, 25.8]]];
+
+map.addLines(tuples, {
+    name: "links",
+    style: {
+        color: "steelblue",
+        opacity: 0.8,
+        width: 2,
+        lineStyle: "solid"
+    }
+})
+    
+map.update();</pre>
+        </div>
         <p>Orthographic Projection</p>
-        <div id="demo4" class="map-window"></div>
+        <div class="demo-row">
+            <div id="demo4" class="chart-window"></div>
+            <pre>
+var chartConfig = {
+    style: {
+        backgroundColor: "black",
+    }
+}
+    
+var map = new bluewave.charts.MapChart(parent, chartConfig);
+map.setProjection("Orthographic")
+    
+//Add graticule
+map.addGrid(
+    {
+        name: "grid",
+        style: {
+            opacity: 1,
+        }
+    }
+);
+    
+map.addPolygons(countries.features, {
+    name: "countries",
+    style: {
+        fill: "#bbdaa4"
+    
+    }
+})
+    
+map.update();</pre>
+        </div>
     </div>
 
 
+<!--**************************************************************************
+** Begin demo script
+************************************************************************** -->
     <script type="text/javascript">
 
 
