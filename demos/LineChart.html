@@ -30,20 +30,166 @@
 
     <div class="demo-container">
         <p>Simple Line Graph</p>
-        <div id="demo1" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo1" class="chart-window"></div>
+            <pre>
+var config = {
+    xGrid: true,
+    yGrid: true
+}
+var lineChart = new bluewave.charts.LineChart(parent, config);
+    
+var data = d3.csvParse(dates);
+var line = new bluewave.chart.Line();
+
+lineChart.addLine(line, data, "date", "value")
+lineChart.update();
+    
+};</pre>
+        </div>
         <p>Area Graph</p>
-        <div id="demo2" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo2" class="chart-window"></div>
+            <pre>
+var config = {
+    yGrid: true
+}
+
+var lineChart = new bluewave.charts.LineChart(parent, config);
+    
+var lineConfig = {
+    opacity: 1,
+    width: 1,
+    style: "solid",
+    fill: {
+        color: "#6699CC",
+        startOpacity: 1,
+        endOpacity: 0.1
+    }
+}
+
+var data = d3.csvParse(dates);
+var line = new bluewave.chart.Line(lineConfig);
+
+lineChart.addLine(line, data, "date", "value")
+lineChart.update();
+    
+};</pre>
+        </div>
         <p>Multi-line Chart</p>
-        <div id="demo3" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo3" class="chart-window"></div>
+            <pre>
+var chartConfig = {
+    endTags: true
+}
+    
+var lineChart = new bluewave.charts.LineChart(parent, chartConfig);
+var lineStyles = ["solid", "dashed", "dotted"];
+for (var i = 0; i < 5; i++) {
+    var data =
+        `x,y\n` +
+        `0,${Math.random()}\n` +
+        `1,${Math.random()}\n` +
+        `2,${Math.random()}\n` +
+        `3,${Math.random()}\n` +
+        `4,${Math.random()}\n`;
+    
+    var config = {
+        label: "ex " + [i + 1],
+        color: d3.schemeTableau10[i % 10],
+        style: lineStyles[i % lineStyles.length]
+    };
+    
+    data = d3.csvParse(data)
+    let line = new bluewave.chart.Line(config);
+    lineChart.addLine(line, data, "x", "y")
+}
+    
+lineChart.update();
+    
+};</pre>
+        </div>
         <p>Moving Average</p>
-        <div id="demo4" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo4" class="chart-window"></div>
+            <pre>
+var config = {
+    xGrid: true,
+    yGrid: true
+}
+    
+var lineChart = new bluewave.charts.LineChart(parent, config);
+    
+var data = d3.csvParse(randomData);
+var line = new bluewave.chart.Line({ color: "lightsteelblue" });
+var lineAvg = new bluewave.chart.Line({
+    smoothing: "movingAverage",
+    smoothingValue: 20,
+    width: 5,
+});
+    
+lineChart.addLine(line, data, "x", "y");
+lineChart.addLine(lineAvg, data, "x", "y");
+    
+lineChart.update();
+};</pre>
+        </div>
         <p>Logarithmic Scale</p>
-        <div id="demo5" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo5" class="chart-window"></div>
+            <pre>
+var config = {
+    xGrid: true,
+    yGrid: true,
+    scaling: "logarithmic",
+    animationSteps: 0
+}
+var lineChart = new bluewave.charts.LineChart(parent, config);
+    
+var data = d3.csvParse(randomData);
+var line = new bluewave.chart.Line();
+    
+lineChart.addLine(line, data, "x", "y");
+    
+lineChart.update();
+};</pre>
+        </div>
         <p>Stacked Line Chart</p>
-        <div id="demo6" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo6" class="chart-window"></div>
+            <pre>
+var config = {
+    stackValues: true
+}
+
+var lineChart = new bluewave.charts.LineChart(parent, config);
+       
+for (let i = 0; i < 5; i++) {
+    
+    var csv =
+        `date,value\n` +
+        `1/10/2022,${Math.random()*100}\n` +
+        `1/11/2022,${Math.random()*100}\n` +
+        `1/12/2022,${Math.random()*100}\n` +
+        `1/23/2022,${Math.random()*100}\n` +
+        `1/30/2022,${Math.random()*100}\n`;
+                    
+    var data = d3.csvParse(csv);
+    
+    var line = new bluewave.chart.Line({color: d3.schemeTableau10[i%10]});
+    lineChart.addLine(line, data, "date", "value")
+    
+}           
+    
+lineChart.update();</pre>
+        </div>
     </div>
 
 
+<!--**************************************************************************
+** Begin demo script
+************************************************************************** -->
     <script type="text/javascript">
         var dates =
             "date,value\n" +
@@ -231,3 +377,4 @@
     </script>
 
 </body>
+</html>
