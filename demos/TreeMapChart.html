@@ -30,10 +30,62 @@
 
     <div class="demo-container">
         <p>Tree Map Chart</p>
-        <div id="demo1" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo1" class="chart-window"></div>
+            <pre>
+var treeMap = new bluewave.charts.TreeMapChart(parent, {});
+
+var csv =
+    "username,commits,repo\n" +
+    "tom,15,repoA\n" +
+    "chris,12,repoA\n" +
+    "abel,4,repoA\n" +
+    "doug,7,repoB\n" +
+    "james,15,repoB\n" +
+    "stan,21,repoB\n" +
+    "dan,4,repoC\n" +
+    "nick,7,repoD\n" +
+    "liam,10,repoD\n" +
+    "josh,9,repoD\n" +
+    "oliver,6,repoE\n" +
+    "william,4,repoE\n" +
+    "dan,3,repoE\n" +
+    "nick,8,repoF\n" +
+    "liam,15,repoF\n";
+    
+    
+var chartConfig = {
+    key: "username",
+    value: "commits",
+    groupBy: "repo",
+    
+    keyLabel: true,
+    groupLabel: true,
+    valueLabel: true,
+    
+    colors: [
+        "#402D54",
+        "#D18975",
+        "#8FD175",
+        "#cc0a12",
+        "#b8eb14",
+        "#0d90f2",
+        "#14e8eb",
+        "#1ce35b"
+    ]
+};
+    
+    
+var data = d3.csvParse(csv);
+    
+treeMap.update(chartConfig, data);</pre>
+        </div>
     </div>
 
 
+<!--**************************************************************************
+** Begin demo script
+************************************************************************** -->
     <script type="text/javascript">
 
         var demo1 = function () {
@@ -95,3 +147,4 @@
     </script>
 
 </body>
+</html>
