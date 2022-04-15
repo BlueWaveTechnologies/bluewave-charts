@@ -27,15 +27,50 @@
 
     <h1>Pie Demos</h1>
 
-
     <div class="demo-container">
         <p>Simple Pie Chart</p>
-        <div id="demo1" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo1" class="chart-window"></div>
+            <pre>
+var pieChart = new bluewave.charts.PieChart(parent, {});
+    
+    
+var config = {
+    
+    pieKey: "date",
+    pieValue: "value",
+    pieCutout: 0,
+};
+    
+var data = d3.csvParse(dates);
+    
+pieChart.update(config, [data]);</pre>
+        </div>
         <p>Donut Chart</p>
-        <div id="demo2" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo2" class="chart-window"></div>
+            <pre>
+var pieChart = new bluewave.charts.PieChart(parent, {});
+    
+    
+var config = {
+
+    pieKey: "date",
+    pieValue: "value",
+    pieCutout: 0.5,
+    labelOffset: 150
+};
+    
+var data = d3.csvParse(dates);
+    
+pieChart.update(config, [data]);</pre>
+        </div>
     </div>
 
 
+<!--**************************************************************************
+** Begin demo script
+************************************************************************** -->
     <script type="text/javascript">
 
         var dates =
@@ -93,3 +128,4 @@
     </script>
 
 </body>
+</html>
