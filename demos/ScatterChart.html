@@ -30,12 +30,49 @@
 
     <div class="demo-container">
         <p>Simple Scatter Chart</p>
-        <div id="demo1" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo1" class="chart-window"></div>
+            <pre>
+var scatterChart = new bluewave.charts.ScatterChart(parent, {});
+
+var config = {
+    xAxis: "date",
+    yAxis: "value",
+    pointRadius: 10,
+};
+    
+var data = d3.csvParse(dates);
+    
+scatterChart.update(config, [data]);</pre>
+        </div>
         <p>Linear Regression</p>
-        <div id="demo2" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo2" class="chart-window"></div>
+            <pre>
+var scatterChart = new bluewave.charts.ScatterChart(parent, {});
+
+var config = {
+
+    xAxis: "date",
+    yAxis: "total",
+    showRegLine: true,
+    pointOpacity: 0.5,
+
+    xLabel: "date",
+    yLabel: "value",
+
+};
+    
+var data = d3.csvParse(dates);
+    
+scatterChart.update(config, [data]);</pre>
+        </div>
     </div>
 
 
+<!--**************************************************************************
+** Begin demo script
+************************************************************************** -->
     <script type="text/javascript">
         var demo1 = function () {
 
@@ -97,3 +134,4 @@
     </script>
 
 </body>
+</html>
