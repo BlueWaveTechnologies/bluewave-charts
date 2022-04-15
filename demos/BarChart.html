@@ -25,20 +25,85 @@
 <body>
     
     <h1>Bar Graph Demos</h1>
-
+    
     <div class="demo-container">
         <p>Bar graph with simulated time series data</p>
-        <div id="demo1" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo1" class="chart-window"></div>
+            <pre>
+var barChart = new bluewave.charts.BarChart(parent, {});
+            
+var config = {  
+    xAxis: "date",
+    yAxis: "value",
+            
+    xLabel: "date",
+    yLabel: "value",
+};
+            
+data = d3.csvParse(dates);
+              
+barChart.update(config, [data]);</pre>
+        </div>
         <p>Horizontal Bar Chart</p>
-        <div id="demo2" class="chart-window"></div>
+        
+        <div class="demo-row">
+            <div id="demo2" class="chart-window"></div>
+            <pre>
+var barChart = new bluewave.charts.BarChart(parent, {});
+            
+var config = {
+    xAxis: "group",
+    yAxis: "normal",
+    layout: "horizontal",
+};
+            
+data = d3.csvParse(dates);
+              
+barChart.update(config, [data]);</pre>
+        </div>
         <p>Grouped Bar Chart</p>
-        <div id="demo3" class="chart-window"></div>
+        <div class="demo-row">
+            <div id="demo3" class="chart-window"></div>
+            <pre>
+var barChart = new bluewave.charts.BarChart(parent, {});
+            
+var config = {
+    xAxis: "country",
+    yAxis: "population",
+    group: "religion",
+    colors: d3.schemeTableau10
+};
+            
+data = d3.csvParse(dates);
+              
+barChart.update(config, [data]);</pre>
+        </div>
         <p>Stacked Bar Chart</p>
-        <div id="demo4" class="chart-window"></div>
-        <!-- <div id="demo5" class="chart-window"></div> -->
+        <div class="demo-row">
+            <div id="demo4" class="chart-window"></div>
+            <pre>
+var barChart = new bluewave.charts.BarChart(parent, {});
+            
+var config = {
+    xAxis: "country",
+    yAxis: "population",
+    group: "religion",
+    colors: d3.schemeTableau10,
+    stackValues: true 
+};
+
+data = d3.csvParse(dates);
+              
+barChart.update(config, [data]);</pre>
+        </div>
+      
     </div>
     
-    
+
+<!--**************************************************************************
+** Begin demo script
+************************************************************************** -->
     <script type="text/javascript">
 
     var religionData = "country,religion,population\n" + "China,Christian,68410000\n" + "China,Muslim,24690000\n" + "China,Unaffiliated,700680000\n" + "China,Hindu,20000\n" + "China,Buddhist,244130000\n" + "China,Folk Religions,294320000\n" + "China,Other Religions,9080000\n" + "China,Jewish,0\n" + "India,Christian,31130000\n" + "India,Muslim,176190000\n" + "India,Unaffiliated,870000\n" + "India,Hindu,973750000\n" + "India,Buddhist,9250000\n" + "India,Folk Religions,5840000\n" + "India,Other Religions,27560000\n" + "India,Jewish,10000\n" + "United States,Christian,243060000\n" + "United States,Muslim,2770000\n" + "United States,Unaffiliated,50980000\n" + "United States,Hindu,1790000\n" + "United States,Buddhist,3570000\n" + "United States,Folk Religions,630000\n" + "United States,Other Religions,1900000\n" + "United States,Jewish,5690000\n" + "Indonesia,Christian,23660000\n" + "Indonesia,Muslim,209120000\n" + "Indonesia,Unaffiliated,240000\n" + "Indonesia,Hindu,4050000\n" + "Indonesia,Buddhist,1720000\n" + "Indonesia,Folk Religions,750000\n" + "Indonesia,Other Religions,340000\n" + "Indonesia,Jewish,0\n" + "Brazil,Christian,173300000\n" + "Brazil,Muslim,40000\n" + "Brazil,Unaffiliated,15410000\n" + "Brazil,Hindu,0\n" + "Brazil,Buddhist,250000\n" + "Brazil,Folk Religions,5540000\n" + "Brazil,Other Religions,300000\n" + "Brazil,Jewish,110000\n" + "Pakistan,Christian,2750000\n" + "Pakistan,Muslim,167410000\n" + "Pakistan,Unaffiliated,20000\n" + "Pakistan,Hindu,3330000\n" + "Pakistan,Buddhist,20000\n" + "Pakistan,Folk Religions,30000\n" + "Pakistan,Other Religions,20000\n" + "Pakistan,Jewish,0\n";
@@ -131,22 +196,6 @@
 
         barChart.update(config, [data])
     }
-
-    // var demo5 = function(){
-        
-    //     var data = histogramData;
-
-    //     var parent = document.getElementById("demo5");
-    //     var barChart = new bluewave.charts.BarChart(parent, {});
-
-    //     var config = {
-    //         xAxis: "total",
-    //         yAxis: "total",
-    //         barType: "histogram"
-    //     };
-
-    //     barChart.update(config, [data])
-    // }
 
 
     </script>
