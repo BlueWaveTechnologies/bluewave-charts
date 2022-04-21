@@ -1,0 +1,62 @@
+
+on: [push]
+
+name: Create Release
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+     # create project directory
+      - name: Create compiled project directory
+        run: mkdir compiledProjectDirectory
+
+     ### Minify JS and consolidate into one file
+
+     # Minify web/app file directory into individually minified files
+      - name: Minify all files within web/app directory
+        uses: nizarmah/auto-minify@v2.1
+        with:
+          directory: ./src
+          overwrite: true
+
+     # Append all minified files of src into a single file (bluewave.js)
+      - name: Combine minified web files into bluewave.js file
+        run: find ./src -name '*.js' -exec cat {} \; > ./bluewave-charts.js
+
+     # Grab date
+      - name: Get date
+        run: |
+             DATE=$(date '+%Y%m%d%H%M%S')
+             echo "releaseLabel=$DATE" >> $GITHUB_ENV
+             
+     # Create the release to serve as a place to export to
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          tag_name: ${{ env.releaseLabel }}
+          release_name: Release ${{ env.releaseLabel }}
+          body: |
+            BlueWave Charts
+          draft: false
+          prerelease: false
+
+     # add packaged project to Github Release page
+      - name: Upload packaged project to Github Release page
+        id: upload-release-asset-minified
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: ./bluewave-charts.js
+          asset_name: bluewave-charts.js
+          asset_content_type: application
