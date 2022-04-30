@@ -1,5 +1,3 @@
-*.log
+nbproject
 *.DS_Store
-*.dll
-**/test.html*
 **/!README.TXT
