@@ -52,6 +52,38 @@ bluewave.charts.CalendarChart = function(parent, config) {
 
 
   //**************************************************************************
+  //** onClick
+  //**************************************************************************
+    this.onClick = function(el, d){};
+
+
+  //**************************************************************************
+  //** getCell
+  //**************************************************************************
+  /** Return a DOM element associated with a given date
+   */
+    this.getCell = function(date){
+        date = new Date(date);
+        var year = date.getFullYear();
+        var month = date.getMonth();
+        var day = date.getDate();
+
+
+        var el = null;
+        calendarArea.selectAll("rect").each(function(date) {
+            var y = date.getFullYear();
+            var m = date.getMonth();
+            var d = date.getDate();
+            if (y===year && m===month && d===day){
+                el = this;
+            }
+        });
+
+        return el;
+    };
+
+
+  //**************************************************************************
   //** getTooltipLabel
   //**************************************************************************
     this.getTooltipLabel = function(d){
@@ -74,7 +106,13 @@ bluewave.charts.CalendarChart = function(parent, config) {
 
         me.clear();
 
-        config = merge(chartConfig, defaultConfig);
+        if (arguments.length>1){
+            config = merge(chartConfig, defaultConfig);
+        }
+        else{
+            data = arguments[0];
+        }
+
 
         var parent = svg.node().parentNode;
         onRender(parent, function(){
@@ -270,11 +308,19 @@ bluewave.charts.CalendarChart = function(parent, config) {
             .attr("y", date => countDay(date.getUTCDay()) * cellSize + 0.5)
             .attr("fill", function(date, i){
                 var value = values[i];
-                return getColor(value);
+                var color = getColor(value);
+                if (color===config.colors[0] && value>0){
+                    color = colors[1];
+                }
+                return color;
             })
         .on("mouseover", mouseover)
         .on("mousemove", mousemove)
-        .on("mouseleave", mouseleave);
+        .on("mouseleave", mouseleave)
+        .on("click", function(d, i){
+            me.onClick(this, {date: d, value: values[i]});
+        });
+
 
       //Create month group
         var monthGroup = yearGroup.append("g")
