@@ -1,131 +1,139 @@
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-
+<!doctype html>
+<html>
 <head>
-    <title>Pie Chart Demo</title>
+<title>Pie Chart</title>
 
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <link href="style.css" rel="stylesheet" type="text/css" />
+<!-- BlueWave Dependencies -->
+<script src="https://www.javaxt.com/downloads/javaxt-webcontrols/javaxt.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
 
 
-    <!-- JavaXT Includes -->
-    <script type="text/javascript" src="https://www.javaxt.com/downloads/javaxt-webcontrols/javaxt.js"></script>
+<!-- BlueWave Includes -->
+<script src="../src/PieChart.js"></script>
+<script src="../src/Utils.js"></script>
 
-    <!-- D3 Includes -->
-    <script src="https://d3js.org/d3.v5.min.js"></script>
 
-    <script type="text/javascript" src="../src/PieChart.js"></script>
-    <script type="text/javascript" src="../src/Utils.js"></script>
+<!-- Demo-Specific Includes -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/mode/javascript/javascript.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/codemirror.min.css" rel="stylesheet" />
+<link href="style.css" rel="stylesheet" type="text/css" />
 
 </head>
-
-
 <body>
 
-    <h1>Pie Demos</h1>
+<h1>Pie Chart Demos</h1>
 
-    <div class="demo-container">
-        <p>Simple Pie Chart</p>
-        <div class="demo-row">
-            <div id="demo1" class="chart-window"></div>
-            <pre>
-var pieChart = new bluewave.charts.PieChart(parent, {});
-    
-    
-var config = {
-    
-    pieKey: "date",
-    pieValue: "value",
-    pieCutout: 0,
-};
-    
-var data = d3.csvParse(dates);
-    
-pieChart.update(config, [data]);</pre>
-        </div>
-        <p>Donut Chart</p>
-        <div class="demo-row">
-            <div id="demo2" class="chart-window"></div>
-            <pre>
-var pieChart = new bluewave.charts.PieChart(parent, {});
-    
-    
-var config = {
+<div class="demo-container">
 
-    pieKey: "date",
-    pieValue: "value",
-    pieCutout: 0.5,
-    labelOffset: 150
-};
-    
-var data = d3.csvParse(dates);
-    
-pieChart.update(config, [data]);</pre>
-        </div>
-    </div>
-
-
-<!--**************************************************************************
-** Begin demo script
-************************************************************************** -->
-    <script type="text/javascript">
-
-        var dates =
-            "date,value\n" +
-            "10/2022,3\n" +
-            "11/2022,1\n" +
-            "12/2022,6\n" +
-            "13/2022,3\n" +
-            "14/2022,4\n";
-
-        var demo1 = function () {
-
-            var parent = document.getElementById("demo1");
-            var pieChart = new bluewave.charts.PieChart(parent, {});
-
-
-            var config = {
-
-                pieKey: "date",
-                pieValue: "value",
-                pieCutout: 0,
-            };
-
-            var data = d3.csvParse(dates);
-
-            pieChart.update(config, [data]);
-
-        };
-
-        var demo2 = function () {
-
-            var parent = document.getElementById("demo2");
-            var pieChart = new bluewave.charts.PieChart(parent, {});
-
-
-            var config = {
-
-                pieKey: "date",
-                pieValue: "value",
-                pieCutout: 0.5,
-                labelOffset: 150
-            };
-
-            var data = d3.csvParse(dates);
-
-            pieChart.update(config, [data]);
-
-        };
-        
-    </script>
-
+  <h2>Pie Chart</h2>
+  <p>Basic pie chart using csv data</p>
+  <div class="demo-row">
+    <div id="demo1" class="chart-window"></div>
     <script>
-        demo1();
-        demo2();
+
+  //Create pie chart using "demo1" div
+    var div = document.getElementById("demo1");
+    var pieChart = new bluewave.charts.PieChart(div, {
+        labelOffset: 50
+    });
+
+  //Create csv data for the pie chart
+    var csv =
+    "date,value\n" +
+    "10/2022,3\n" +
+    "11/2022,1\n" +
+    "12/2022,6\n" +
+    "13/2022,3\n" +
+    "14/2022,4\n";
+
+  //Parse csv using d3
+    var data = d3.csvParse(csv);
+
+  //Update the chart to render the data
+    pieChart.update(data, "date", "value");
+
     </script>
+  </div>
+
+
+  <h2>Donut Chart</h2>
+  <p>Basic donut pie chart using same csv data from pie chart example above</p>
+  <div class="demo-row">
+    <div id="demo2" class="chart-window"></div>
+    <script>
+
+  //Create pie chart using "demo2" div
+    var div = document.getElementById("demo2");
+    var pieChart = new bluewave.charts.PieChart(div, {
+        pieCutout: 0.65,
+        labelOffset: 120
+    });
+
+  //Update the chart using data from demo1
+    pieChart.update(data, "date", "value");
+
+    </script>
+  </div>
+
+
+  <h2>Donut Chart 2</h2>
+  <p>Donut chart with json data and custom colors</p>
+  <div class="demo-row">
+    <div id="demo3" class="chart-window"></div>
+    <script>
+
+  //Create pie chart using "demo3" div
+    var div = document.getElementById("demo3");
+    var pieChart = new bluewave.charts.PieChart(div, {
+        pieCutout: 0.5,
+        showLabels: true,
+        colors: ["#85c536","#fdb45c"], //start->end
+        colorScaling: "linear",
+        borderColor: "#fff",
+        labelOffset: 125
+    });
+
+
+  //Update the chart using custom data
+    pieChart.update([
+        {
+            "key": "Complete",
+            "value": 67.7
+        },
+        {
+            "key": "Remaining",
+            "value": 33.3
+        }
+    ]);
+
+    </script>
+  </div>
+
+</div>
+
+
+<script type="text/javascript">
+window.onload = function() {
+
+  //The following script creates code blocks for each demo
+    var scripts = document.getElementsByTagName("script");
+    for (var i=0; i<scripts.length-1; i++){
+        var script = scripts[i];
+        if (script.src) continue;
+
+        var div = document.createElement("div");
+        script.parentNode.appendChild(div);
+
+        CodeMirror(div, {
+            mode: "javascript",
+            lineNumbers: true,
+            readOnly: true,
+            value: "  " + script.innerText.trim()
+        });
+    }
+};
+</script>
 
 </body>
 </html>

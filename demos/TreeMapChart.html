@@ -1,41 +1,42 @@
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-
+<!doctype html>
+<html>
 <head>
-    <title>Tree Map Demo</title>
+<title>TreeMap Chart</title>
 
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <link href="style.css" rel="stylesheet" type="text/css" />
+<!-- BlueWave Dependencies -->
+<script src="https://www.javaxt.com/downloads/javaxt-webcontrols/javaxt.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+
+<!-- BlueWave Includes -->
+<script src="../src/TreeMapChart.js"></script>
+<script src="../src/Utils.js"></script>
 
 
-    <!-- JavaXT Includes -->
-    <script type="text/javascript" src="https://www.javaxt.com/downloads/javaxt-webcontrols/javaxt.js"></script>
-
-    <!-- D3 Includes -->
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-
-    <script type="text/javascript" src="../src/TreeMapChart.js"></script>
-    <script type="text/javascript" src="../src/Utils.js"></script>
+<!-- Demo-Specific Includes -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/mode/javascript/javascript.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/codemirror.min.css" rel="stylesheet" />
+<link href="style.css" rel="stylesheet" type="text/css" />
 
 </head>
-
-
 <body>
+<h1>TreeMap Demos</h1>
 
-    <h1>Tree Map Demos</h1>
 
+<div class="demo-container">
 
-    <div class="demo-container">
-        <p>Tree Map Chart</p>
-        <div class="demo-row">
-            <div id="demo1" class="chart-window"></div>
-            <pre>
-var treeMap = new bluewave.charts.TreeMapChart(parent, {});
+  <h2>TreeMap</h2>
+  <p>Basic treemap using csv data representing code commits to different repositories</p>
+  <div class="demo-row">
+    <div id="demo1" class="chart-window"></div>
+    <script>
 
-var csv =
+  //Create treemap chart using "demo1" div
+    var div = document.getElementById("demo1");
+    var treeMap = new bluewave.charts.TreeMapChart(div, {});
+
+  //Create csv data for the scatter chart
+    var csv =
     "username,commits,repo\n" +
     "tom,15,repoA\n" +
     "chris,12,repoA\n" +
@@ -52,99 +53,64 @@ var csv =
     "dan,3,repoE\n" +
     "nick,8,repoF\n" +
     "liam,15,repoF\n";
-    
-    
-var chartConfig = {
-    key: "username",
-    value: "commits",
-    groupBy: "repo",
-    
-    keyLabel: true,
-    groupLabel: true,
-    valueLabel: true,
-    
-    colors: [
-        "#402D54",
-        "#D18975",
-        "#8FD175",
-        "#cc0a12",
-        "#b8eb14",
-        "#0d90f2",
-        "#14e8eb",
-        "#1ce35b"
-    ]
-};
-    
-    
-var data = d3.csvParse(csv);
-    
-treeMap.update(chartConfig, data);</pre>
-        </div>
-    </div>
+
+  //Parse csv using d3
+    var data = d3.csvParse(csv);
 
 
-<!--**************************************************************************
-** Begin demo script
-************************************************************************** -->
-    <script type="text/javascript">
+    var chartConfig = {
+        key: "username",
+        value: "commits",
+        groupBy: "repo",
 
-        var demo1 = function () {
+        keyLabel: true,
+        groupLabel: true,
+        valueLabel: true,
 
-            var parent = document.getElementById("demo1");
-            var treeMap = new bluewave.charts.TreeMapChart(parent, {});
-
-
-            var csv =
-                "username,commits,repo\n" +
-                "tom,15,repoA\n" +
-                "chris,12,repoA\n" +
-                "abel,4,repoA\n" +
-                "doug,7,repoB\n" +
-                "james,15,repoB\n" +
-                "stan,21,repoB\n" +
-                "dan,4,repoC\n" +
-                "nick,7,repoD\n" +
-                "liam,10,repoD\n" +
-                "josh,9,repoD\n" +
-                "oliver,6,repoE\n" +
-                "william,4,repoE\n" +
-                "dan,3,repoE\n" +
-                "nick,8,repoF\n" +
-                "liam,15,repoF\n";
+        colors: [
+            "#402D54",
+            "#D18975",
+            "#8FD175",
+            "#cc0a12",
+            "#b8eb14",
+            "#0d90f2",
+            "#14e8eb",
+            "#1ce35b"
+        ]
+    };
 
 
-            var chartConfig = {
-                key: "username",
-                value: "commits",
-                groupBy: "repo",
+    var data = d3.csvParse(csv);
 
-                keyLabel: true,
-                groupLabel: true,
-                valueLabel: true,
+    treeMap.update(chartConfig, data);
 
-                colors: [
-                    "#402D54",
-                    "#D18975",
-                    "#8FD175",
-                    "#cc0a12",
-                    "#b8eb14",
-                    "#0d90f2",
-                    "#14e8eb",
-                    "#1ce35b"
-                ]
-            };
-
-
-            var data = d3.csvParse(csv);
-
-            treeMap.update(chartConfig, data);
-
-        };
-
-
-        demo1();
-        
     </script>
+  </div>
+
+
+</div>
+
+<script>
+window.onload = function() {
+
+  //The following script creates code blocks for each demo
+    var scripts = document.getElementsByTagName("script");
+    for (var i=0; i<scripts.length-1; i++){
+        var script = scripts[i];
+        if (script.src) continue;
+
+        var div = document.createElement("div");
+        script.parentNode.appendChild(div);
+
+        CodeMirror(div, {
+            mode: "javascript",
+            lineNumbers: true,
+            readOnly: true,
+            value: "  " + script.innerText.trim()
+        });
+    }
+};
+</script>
 
 </body>
 </html>

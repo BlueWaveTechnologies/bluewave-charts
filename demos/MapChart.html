@@ -1,338 +1,237 @@
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-
+<!doctype html>
+<html>
 <head>
-    <title>Map Demo</title>
+<title>Map Chart</title>
 
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <link href="style.css" rel="stylesheet" type="text/css" />
+<!-- BlueWave Dependencies -->
+<script src="https://www.javaxt.com/downloads/javaxt-webcontrols/javaxt.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://unpkg.com/topojson-client@3"></script>
 
 
-    <!-- JavaXT Includes -->
-    <script type="text/javascript" src="https://www.javaxt.com/downloads/javaxt-webcontrols/javaxt.js"></script>
+<!-- BlueWave Includes -->
+<script src="../src/MapChart.js"></script>
+<script src="../src/Utils.js"></script>
 
-    <!-- D3 Includes -->
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-    <script src="https://unpkg.com/topojson-client@3"></script>
 
-    <script type="text/javascript" src="../src/MapChart.js"></script>
-    <script src="data/countries.js"></script>
-    <script src="data/counties.js"></script>
-    <script src="data/protected_lands_point.js"></script>
-    <script type="text/javascript" src="../src/Utils.js"></script>
+<!-- Demo-Specific Includes -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/mode/javascript/javascript.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/codemirror.min.css" rel="stylesheet" />
+<link href="style.css" rel="stylesheet" type="text/css" />
+
+
+<!-- Map Data -->
+<script src="data/countries.js"></script>
+<script src="data/counties.js"></script>
+<script src="data/protected_lands_point.js"></script>
 
 </head>
-
-
 <body>
 
-    <h1>Map Demos</h1>
+<h1>Map Demos</h1>
 
+<div class="demo-container">
 
-    <div class="demo-container">
-        <p>Simple World Map</p>
-        <div class="demo-row">
-            <div id="demo1" class="chart-window"></div>
-            <pre>
-var chartConfig = {
-    style: {
-        backgroundColor: "#006994",
-    }
-}
+  <h2>World Map</h2>
+  <p>Simple world map with custom colors</p>
+  <div class="demo-row">
+    <div id="demo1" class="map-window"></div>
+    <script>
 
-var map = new bluewave.charts.MapChart(parent, chartConfig);
-map.addPolygons(countries.features, {
-    name: "countries",
-    style: {
-        fill: "#bbdaa4"
-
-    }
-})
-
-map.update();</pre>
-        </div>
-        <p>Map Chart</p>
-        <div class="demo-row">
-            <div id="demo2" class="chart-window"></div>
-            <pre>
-var map = new bluewave.charts.MapChart(parent, {});
-
-//Set extent to US
-map.setExtent([-130, 50.5], [-65, 25.8])
-
-map.addPolygons(countries.features, {
-    name: "countries",
-    style: {
-
-    }
-});
-
-map.addPoints(pointData.features, {
-    name: "protectedAreas",
-    style: {
-        fill: "steelblue",
-        opacity: 0.8,
-        radius: 3,
-    }
-});
-
-
-map.update();</pre>
-        </div>
-        <p>Linked Points</p>
-        <div class="demo-row">
-            <div id="demo3" class="chart-window"></div>
-            <pre>
-var map = new bluewave.charts.MapChart(parent, chartConfig);
-//Mumbai to Bali
-map.setExtent([70, 19], [120, -8.4])
-
-map.addPolygons(countries.features, {
-    name: "countries",
-    style: {
-        // fill: "#bbdaa4"
-
-    }
-})
-
-var points = [[0, 52], [4, 51], [-4.25, 55.9],
-[14.4, 50], [116, 40], [-105, -20], [72.9, 19],
-[115, -8.4]];
-
-map.addPoints(points, {
-    name: "cities",
-    style: {
-        fill: "steelblue",
-        opacity: 0.8,
-        radius: 10,
-    }
-});
-
-var tuples = [[[0, 52], [4, 51]], [[-4.25, 55.9], [14.4, 50]],
-[[116, 40], [-105, -20]], [[72.9, 19], [115, -8.4]],
-[[-122.3, 47.6], [-80.2, 25.8]]];
-
-map.addLines(tuples, {
-    name: "links",
-    style: {
-        color: "steelblue",
-        opacity: 0.8,
-        width: 2,
-        lineStyle: "solid"
-    }
-})
-
-map.update();</pre>
-        </div>
-        <p>Orthographic Projection</p>
-        <div class="demo-row">
-            <div id="demo4" class="chart-window"></div>
-            <pre>
-var chartConfig = {
-    style: {
-        backgroundColor: "black",
-    }
-}
-
-var map = new bluewave.charts.MapChart(parent, chartConfig);
-map.setProjection("Orthographic")
-
-//Add graticule
-map.addGrid(
-    {
-        name: "grid",
+  //Create map chart using "demo1" div
+    var div = document.getElementById("demo1");
+    var map = new bluewave.charts.MapChart(div, {
         style: {
-            opacity: 1,
+            backgroundColor: "#006994" //blue
         }
-    }
-);
-
-map.addPolygons(countries.features, {
-    name: "countries",
-    style: {
-        fill: "#bbdaa4"
-
-    }
-})
-
-map.update();</pre>
-        </div>
-    </div>
+    });
 
 
-<!--**************************************************************************
-** Begin demo script
-************************************************************************** -->
-    <script type="text/javascript">
+  //Add country polygons
+    map.addPolygons(countries.features, {
+        name: "countries",
+        style: {
+            fill: "#bbdaa4" //green
+        }
+    });
 
 
-        var countryData = bluewave.data.countries;
-        var pointData = protectedLands;
-
-        //Convert from topojson to geojson
-        var countries = topojson.feature(countryData, countryData.objects.countries);
-
-
-        var demo1 = function () {
-
-            var parent = document.getElementById("demo1");
-
-            var chartConfig = {
-                style: {
-                    backgroundColor: "#006994",
-                }
-            }
-
-            var map = new bluewave.charts.MapChart(parent, chartConfig);
-            map.addPolygons(countries.features, {
-                name: "countries",
-                style: {
-                    fill: "#bbdaa4"
-
-                }
-            })
-
-            map.update();
-
-        };
-
-
-        var demo2 = function () {
-
-            var parent = document.getElementById("demo2");
-
-            var chartConfig = {
-                style: {
-                    // backgroundColor: "#006994",
-                }
-            }
-
-            var map = new bluewave.charts.MapChart(parent, chartConfig);
-            //Set extent to US
-            map.setExtent([-130, 50.5], [-65, 25.8])
-
-            map.addPolygons(countries.features, {
-                name: "countries",
-                style: {
-                    // fill: "#bbdaa4"
-
-                }
-            });
-
-            map.addPoints(pointData.features, {
-                name: "protectedAreas",
-                style: {
-                    fill: "steelblue",
-                    opacity: 0.8,
-                    radius: 3,
-                }
-            });
-
-
-            map.update();
-
-        };
-
-
-        var demo3 = function () {
-
-            var parent = document.getElementById("demo3");
-
-            var chartConfig = {
-                style: {
-                    // backgroundColor: "#006994",
-                }
-            }
-
-            var map = new bluewave.charts.MapChart(parent, chartConfig);
-            //Mumbai to Bali
-            map.setExtent([70, 19], [120, -8.4])
-
-            map.addPolygons(countries.features, {
-                name: "countries",
-                style: {
-                    // fill: "#bbdaa4"
-
-                }
-            })
-
-            var points = [[0, 52], [4, 51], [-4.25, 55.9], [14.4, 50], [116, 40], [-105, -20], [72.9, 19], [115, -8.4]]
-            map.addPoints(points, {
-                name: "cities",
-                style: {
-                    fill: "steelblue",
-                    opacity: 0.8,
-                    radius: 10,
-                }
-            });
-
-            var tuples = [[[0, 52], [4, 51]], [[-4.25, 55.9], [14.4, 50]], [[116, 40], [-105, -20]], [[72.9, 19], [115, -8.4]], [[-122.3, 47.6], [-80.2, 25.8]]];
-            map.addLines(tuples, {
-                name: "links",
-                style: {
-                    color: "steelblue",
-                    opacity: 0.8,
-                    width: 2,
-                    lineStyle: "solid"
-                }
-            })
-
-            map.update();
-
-        };
-
-
-        var demo4 = function () {
-
-            var parent = document.getElementById("demo4");
-
-            var chartConfig = {
-                style: {
-                    backgroundColor: "black",
-                }
-            }
-
-            var map = new bluewave.charts.MapChart(parent, chartConfig);
-            map.setProjection("Orthographic")
-
-            //Add graticule
-            map.addGrid(
-                {
-                    name: "grid",
-                    style: {
-                        opacity: 1,
-                    }
-                }
-            );
-
-            map.addPolygons(countries.features, {
-                name: "countries",
-                style: {
-                    fill: "#bbdaa4"
-
-                }
-            })
-
-            map.update();
-
-        };
-
+  //Update the chart to render the data
+    map.update();
 
     </script>
+  </div>
 
-    <script type="text/javascript">
-    window.onload = function () {
 
-        demo1();
-        demo2();
-        demo3();
-        demo4();
 
-    };
+  <h2>Point Map</h2>
+  <p>Map with points representing protected lands in the US</p>
+  <div class="demo-row">
+    <div id="demo2" class="map-window"></div>
+    <script>
+
+  //Create map chart using "demo2" div
+    var div = document.getElementById("demo2");
+    var map = new bluewave.charts.MapChart(div, {});
+
+
+  //Set extent to US
+    map.setExtent([-130, 50.5], [-65, 25.8]);
+
+
+  //Add country polygons
+    map.addPolygons(countries.features);
+
+
+  //Add points
+    map.addPoints(protectedLands.features, {
+        name: "protectedAreas",
+        style: {
+            fill: "steelblue",
+            opacity: 0.8,
+            radius: 3
+        }
+    });
+
+
+  //Update the chart to render the data
+    map.update();
+
     </script>
+  </div>
+
+
+
+  <h2>Point and Lines</h2>
+  <p>Map with points and lines</p>
+  <div class="demo-row">
+    <div id="demo3" class="map-window"></div>
+    <script>
+
+  //Create map chart using "demo3" div
+    var div = document.getElementById("demo3");
+    var map = new bluewave.charts.MapChart(div, {});
+
+
+  //Mumbai to Bali
+    //map.setExtent([70, 19], [120, -8.4]);
+
+  //Add country polygons
+    map.addPolygons(countries.features);
+
+
+  //Add points
+    var points = [
+        [0, 52], [4, 51], [-4.25, 55.9],
+        [14.4, 50], [116, 40], [-105, -20],
+        [72.9, 19], [115, -8.4]
+    ];
+    map.addPoints(points, {
+        name: "cities",
+        style: {
+            fill: "steelblue",
+            opacity: 0.8,
+            radius: 10,
+        }
+    });
+
+
+  //Add lines
+    var tuples = [
+        [[0, 52], [4, 51]],
+        [[-4.25, 55.9], [14.4, 50]],
+        [[116, 40], [-105, -20]],
+        [[72.9, 19], [115, -8.4]], //Mumbai to Bali
+        [[-122.3, 47.6], [-80.2, 25.8]]
+    ];
+    map.addLines(tuples, {
+        name: "links",
+        style: {
+            color: "steelblue",
+            opacity: 0.8,
+            width: 2,
+            lineStyle: "solid"
+        }
+    });
+
+  //Update the chart to render the data
+    map.update();
+
+    </script>
+  </div>
+
+
+
+  <h2>Orthographic Projection</h2>
+  <p>Custom projection</p>
+  <div class="demo-row">
+    <div id="demo4" class="map-window"></div>
+    <script>
+
+  //Create map chart using "demo4" div
+    var div = document.getElementById("demo4");
+    var map = new bluewave.charts.MapChart(div, {
+        style: {
+            backgroundColor: "black"
+        }
+    });
+
+
+  //Set projection
+    map.setProjection("Orthographic");
+
+
+  //Add graticule
+    map.addGrid(
+        {
+            name: "grid",
+            style: {
+                opacity: 1
+            }
+        }
+    );
+
+
+  //Add country polygons
+    map.addPolygons(countries.features, {
+        name: "countries",
+        style: {
+            fill: "#bbdaa4"
+
+        }
+    })
+
+    map.update();
+
+    </script>
+  </div>
+
+</div>
+
+
+
+<script type="text/javascript">
+window.onload = function() {
+
+  //The following script creates code blocks for each demo
+    var scripts = document.getElementsByTagName("script");
+    for (var i=0; i<scripts.length-1; i++){
+        var script = scripts[i];
+        if (script.src) continue;
+
+        var div = document.createElement("div");
+        script.parentNode.appendChild(div);
+
+        CodeMirror(div, {
+            mode: "javascript",
+            lineNumbers: true,
+            readOnly: true,
+            value: "  " + script.innerText.trim()
+        });
+    }
+};
+</script>
 
 </body>
 </html>

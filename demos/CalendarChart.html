@@ -1,98 +1,112 @@
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-
+<!doctype html>
+<html>
 <head>
-    <title>Calendar Chart Demo</title>
+<title>Calendar Chart</title>
 
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <link href="style.css" rel="stylesheet" type="text/css" />
+<!-- BlueWave Dependencies -->
+<script src="https://www.javaxt.com/downloads/javaxt-webcontrols/javaxt.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
 
 
-    <!-- JavaXT Includes -->
-    <script type="text/javascript" src="https://www.javaxt.com/downloads/javaxt-webcontrols/javaxt.js"></script>
+<!-- BlueWave Includes -->
+<script src="../src/CalendarChart.js"></script>
+<script src="../src/Utils.js"></script>
 
-    <!-- D3 Includes -->
-    <script src="https://d3js.org/d3.v5.min.js"></script>
 
-    <script type="text/javascript" src="../src/CalendarChart.js"></script>
-    <script type="text/javascript" src="../src/Utils.js"></script>
+<!-- Demo-Specific Includes -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/mode/javascript/javascript.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/codemirror.min.css" rel="stylesheet" />
+<link href="style.css" rel="stylesheet" type="text/css" />
 
 </head>
-
-
 <body>
 
-    <h1>Calendar Chart Demos</h1>
+<h1>Calendar Demos</h1>
 
 
-    <div class="demo-container">
-        <p>Calendar Chart</p>
-        <div class="demo-row">
-            <div id="demo1" class="chart-window"></div>
-            <pre>
-var calendarChart = new bluewave.charts.CalendarChart(parent, {});
-                
-var chartConfig = {
-    date: "Date",
-    value: "Volume",
-};
-   
-var csv = "Date,Volume\n";
-
-var year = new Date().getFullYear();
-var tomorrow = new Date("01/01/"+year);
-
-for (let i=0; i < 180; i++){
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    csv += tomorrow + "," + Math.random()*1000000000 + "\n";
-}
-
-var data = d3.csvParse(csv);
-    
-var calendarChart = new bluewave.charts.CalendarChart(parent, {});
-calendarChart.update(chartConfig, data);</pre>
-        </div>
-    </div>
-
-<!--**************************************************************************
-** Begin demo script
-************************************************************************** -->
-    <script type="text/javascript">
-
-        var demo1 = function () {
-
-            var parent = document.getElementById("demo1");
-            var calendarChart = new bluewave.charts.CalendarChart(parent, {});
-
-            var csv = "Date,Volume\n";
-
-            var year = new Date().getFullYear();
-            var tomorrow = new Date("01/01/"+year);
-
-            for (let i=0; i<180; i++){
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                csv += tomorrow + "," + Math.random()*1000000000 + "\n";
-            }
-
-            var chartConfig = {
-                date: "Date",
-                value: "Volume",
-            };
-
-            var data = d3.csvParse(csv);
-
-            var calendarChart = new bluewave.charts.CalendarChart(parent, {});
-            calendarChart.update(chartConfig, data);
-
-        };
+<div style="margin: auto;max-width: 1000px;">
+  <h2>Calendar Chart</h2>
+  <p>Example of a calendar chart generated from a CSV dataset. The CSV is generated dynamically using random values.</p>
+  <div>
+    <div id="demo1" style="width:100%;height:180px;"></div>
+    <script>
 
 
-        demo1();
+  //Create calendar chart using "demo1" div
+    var parent = document.getElementById("demo1");
+    var config = {
+        dayLabel: false,
+        yearLabel: false,
+        weekday: "monday", // either: weekday, sunday, or monday
+        cellSize: 17, // width and height of an individual day, in pixels
+        colors: ["#fff","#ebf5dc","#cbe9a5","#2a671a"], //green colors
+        showTooltip: true
+    };
+    var calendarChart = new bluewave.charts.CalendarChart(parent, config);
+
+
+  //Create csv data for the calendar
+    var csv = "Date,Volume\n";
+    var year = new Date().getFullYear();
+    var date = new Date("01/01/"+year);
+    for (var i=0; i<365; i++){
+        var value = Math.round(Math.random()*1000000000);
+        csv += date + "," + value + "\n";
+        date.setDate(date.getDate() + 1);
+    }
+
+
+  //Parse csv using d3 and update chart config
+    var data = d3.csvParse(csv);
+    config.date = "Date";
+    config.value = "Volume";
+
+
+  //Update the chart to render the data
+    calendarChart.update(config, data);
+
+
+    calendarChart.onClick = function(rect, d){
+        console.log(d);
+    };
+
+
+    setTimeout(function(){
+        var cell = calendarChart.getCell("1/10/2022");
+        console.log(cell);
+    },300);
+
 
     </script>
+  </div>
+</div>
+
+
+
+
+<script type="text/javascript">
+window.onload = function() {
+
+  //The following script creates code blocks for each demo
+    var scripts = document.getElementsByTagName("script");
+    for (var i=0; i<scripts.length-1; i++){
+        var script = scripts[i];
+        if (script.src) continue;
+
+
+        var div = document.createElement("div");
+        script.parentNode.appendChild(div);
+
+        CodeMirror(div, {
+            mode: "javascript",
+            lineNumbers: true,
+            readOnly: true,
+            value: "  " + script.innerText.trim()
+        });
+    }
+};
+</script>
 
 </body>
 </html>
