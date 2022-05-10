@@ -15,10 +15,11 @@ bluewave.charts.PieChart = function(parent, config) {
     var defaultConfig = {
         pieKey: "key",
         pieValue: "value",
-        pieCutout: 0.65,
+        pieCutout: 0.0,
         showLabels: true,
         labelOffset: 100,
         lineColor: "#777",
+        borderColor: "#777",
         extendLines: false,
         colors: ["#6699cc","#f8f8f8"], //start->end
         colorScaling: "linear",
@@ -63,28 +64,47 @@ bluewave.charts.PieChart = function(parent, config) {
   //** clear
   //**************************************************************************
     this.clear = function(){
-        if (pieArea){
-            pieArea.node().innerHTML = "";
-            pieArea.attr("transform", null);
-        }
+        clearChart();
     };
 
 
   //**************************************************************************
   //** update
   //**************************************************************************
-    this.update = function(chartConfig, data){
-        me.clear();
-        me.setConfig(chartConfig);
+    this.update = function(data, key, value){
+        clearChart();
 
+        if (arguments.length>0){
+            if (arguments.length===1){
+                //Use pieKey and pieValue
+            }
+            else{
+                if (typeof key === "string"){
+                    config.pieKey = key;
+                    config.pieValue = value;
+                }
+                else{
+                  //bluewave explorer
+                    me.setConfig(arguments[0]);
+                    data = arguments[1];
+                }
+            }
+        }
 
         var parent = svg.node().parentNode;
         onRender(parent, function(){
-            update(data, parent);
+            update(data);
         });
     };
 
-    var update = function(data, parent){
+    var clearChart = function(){
+        if (pieArea){
+            pieArea.node().innerHTML = "";
+            pieArea.attr("transform", null);
+        }
+    };
+
+    var update = function(data){
 
         if (isArray(data) && isArray(data[0])) data = data[0];
         if (!config.pieKey || !config.pieValue) return;
@@ -165,8 +185,10 @@ bluewave.charts.PieChart = function(parent, config) {
         pieData = pie(d3.entries(pieData));
 
       //Get parent width/height
-        var width = parent.offsetWidth;
-        var height = parent.offsetHeight;
+        var rect = javaxt.dhtml.utils.getRect(svg.node());
+        var width = rect.width;
+        var height = rect.height;
+
 
 
 
@@ -219,6 +241,7 @@ bluewave.charts.PieChart = function(parent, config) {
         if (!colorScaling) colorScaling = "linear";
         var otherColor = config.otherColor;
         if (!otherColor) otherColor = "#b8b8b8";
+        var borderColor = config.borderColor;
 
 
       //Create function to create fill colors
@@ -250,7 +273,7 @@ bluewave.charts.PieChart = function(parent, config) {
             }
             return getColor(i);
         })
-        .attr("stroke", "#777")
+        .attr("stroke", borderColor)
         .style("stroke-width", "1px")
         .on("mouseover", mouseover)
         .on("mousemove", mousemove)
@@ -421,7 +444,7 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
               //Update position
-                var rect = javaxt.dhtml.utils.getRect(parent);
+                //var rect = javaxt.dhtml.utils.getRect(parent);
                 var y = rect.y;
                 var x = rect.x;
                 var cx = rect.x+(rect.width/2);
@@ -496,32 +519,35 @@ bluewave.charts.PieChart = function(parent, config) {
             })
             .ease(d3.easeLinear)
             .attrTween('d', function (d) {
-
-              var interpolater = d3.interpolate(d.startAngle, d.endAngle);
-              return function (t) {
-                d.endAngle = interpolater(t);
-                return arc(d);
-              }
+                var interpolater = d3.interpolate(d.startAngle, d.endAngle);
+                return function (t) {
+                    d.endAngle = interpolater(t);
+                    return arc(d);
+                };
             });
 
-            if(showLabels){
 
-              var labels = labelGroup.selectAll("text");
-              var polylines = lineGroup.selectAll("polyline");
+            if (showLabels){
 
-              //Reset opacity for lines and labels to 0 for transition
-              polylines.attr("opacity", 0);
-              labels.attr("opacity", 0);
+                var labels = labelGroup.selectAll("text");
+                var polylines = lineGroup.selectAll("polyline");
 
-              var delayTransition = function(d, i){
-                return i*animationSteps/numSlices;
-              }
+                //Reset opacity for lines and labels to 0 for transition
+                polylines.attr("opacity", 0);
+                labels.attr("opacity", 0);
+
+                var delayTransition = function(d, i){
+                    return i*animationSteps/numSlices;
+                };
 
               //All the coordinates for the labels and polylines are in endPoints, so we can do any positioning transition I think
-              polylines.transition()
-                .delay(delayTransition)
-                .duration(animationSteps)
-                .attr("opacity", 1);
+                if (labelOffset > 110) {
+                    polylines.transition()
+                      .delay(delayTransition)
+                      .duration(animationSteps)
+                      .attr("opacity", 1);
+                }
+
 
               labels.transition()
                 .delay(delayTransition)
@@ -531,9 +557,6 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
         };
-
-
-
 
     };
 
