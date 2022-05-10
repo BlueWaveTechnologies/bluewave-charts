@@ -35,3 +35,11 @@ The chart classes all have a very similar constructor used to instantiate the cl
         }
     ]);    
 ```
+
+## Releases
+
+This library is under active development. Releases are created automatically whenever code is committed to master.
+
+## License
+
+BlueWave is an open source project released under an MIT License. Feel free to use the code and information found here as you like. This software comes with no guarantees or warranties. You may use this software in any open source or commercial project.
