@@ -430,7 +430,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
             }
 
 
-            marginLeft = (marginLeft+(widthDiff/2))*scale;
+            //marginLeft = (marginLeft+(widthDiff/2))*scale;
             marginTop = (marginTop+(heightDiff/2))*scale;
 
 
