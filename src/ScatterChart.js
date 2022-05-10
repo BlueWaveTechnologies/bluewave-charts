@@ -58,13 +58,31 @@ bluewave.charts.ScatterChart = function(parent, config) {
   //**************************************************************************
   //** update
   //**************************************************************************
-    this.update = function(chartConfig, data){
+    this.update = function(data, xKey, yKey){
         me.clear();
-        me.setConfig(chartConfig);
+
+
+        if (arguments.length>0){
+            if (arguments.length===1){
+                //Use xAxis and yAxis
+            }
+            else{
+                if (typeof xKey === "string"){
+                    config.xAxis = xKey;
+                    config.yAxis = yKey;
+                }
+                else{
+                  //bluewave explorer
+                    me.setConfig(arguments[0]);
+                    data = arguments[1];
+                }
+            }
+        }
+
 
         var parent = svg.node().parentNode;
         onRender(parent, function(){
-            renderChart(data, parent);
+            renderChart(data);
         });
     };
 
@@ -93,7 +111,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
     this.getTooltipLabel = function(d){
         return config.xAxis + ": " + d[config.xAxis] + "<br/>" + config.yAxis + ": " + d[config.yAxis];
     };
-    
+
 
     this.onClick = function(el, datasetID, d){};
 
@@ -101,10 +119,14 @@ bluewave.charts.ScatterChart = function(parent, config) {
   //**************************************************************************
   //** renderChart
   //**************************************************************************
-    var renderChart = function(data, parent){
+    var renderChart = function(data){
 
-        var width = parent.offsetWidth;
-        var height = parent.offsetHeight;
+
+
+
+        var rect = javaxt.dhtml.utils.getRect(svg.node());
+        var width = rect.width;
+        var height = rect.height;
         var axisHeight = height;
         var axisWidth = width;
         plotArea = chart.append("g");
@@ -120,7 +142,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
 
 
       //Only use the first dataset
-        data = data[0];
+        if (isArray(data) && isArray(data[0])) data = data[0];
         if (data.length==0) return;
 
 
@@ -160,7 +182,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
           //Update right margin as needed.
             var maxLabelWidth = 0;
             if (config.pointLabels){
-                                
+
               //Check boxes of all the labels and see if the right side of any of
               //the boxes exceeds the right margin. Adjust accordingly
                 var temp = plotArea.append("g");
@@ -169,8 +191,8 @@ bluewave.charts.ScatterChart = function(parent, config) {
                 .enter()
                 .append("text")
                     .attr("x", 0)
-                    .attr("y", 0)    
-                    .attr("text-anchor", "start")    
+                    .attr("y", 0)
+                    .attr("text-anchor", "start")
                     .attr("font-size", 10)
                     .text(function(d){
                         return me.getPointLabel(d);
@@ -237,8 +259,8 @@ bluewave.charts.ScatterChart = function(parent, config) {
         var getY = function (d) {
             return y(d[yKey]);
         };
-        
-        
+
+
         var tooltip;
         if (config.showTooltip===true){
             tooltip = createTooltip();
@@ -263,8 +285,8 @@ bluewave.charts.ScatterChart = function(parent, config) {
         var mouseleave = function() {
             if (tooltip) tooltip.hide();
             d3.select(this).transition().duration(100).attr("opacity", "1");
-        };        
-        
+        };
+
 
 
       //Draw points
@@ -289,13 +311,13 @@ bluewave.charts.ScatterChart = function(parent, config) {
               .style("stroke", "white")
               .on("mouseover", mouseover)
               .on("mousemove", mousemove)
-              .on("mouseleave", mouseleave)     
+              .on("mouseleave", mouseleave)
               .on("click", function(d){
                 var datasetID = parseInt(d3.select(this).attr("dataset"));
                 me.onClick(this, datasetID, d);
               });
-              
-              
+
+
 
 
 
@@ -320,7 +342,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
                 })
                 .on("mouseover", mouseover)
                 .on("mousemove", mousemove)
-                .on("mouseleave", mouseleave)                 
+                .on("mouseleave", mouseleave)
                 .on("click", function(node){
                     //selectNode(node, this);
                 });
@@ -432,7 +454,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
     var onRender = javaxt.dhtml.utils.onRender;
-
+    var isArray = javaxt.dhtml.utils.isArray;
     var initChart = bluewave.chart.utils.initChart;
     var getType = bluewave.chart.utils.getType;
     var getScale = bluewave.chart.utils.getScale;
