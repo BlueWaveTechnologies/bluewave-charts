@@ -116,6 +116,9 @@ bluewave.chart.utils = {
     drawAxes: function(plotArea, axisWidth, axisHeight, xKey, yKey,
         chartData, minData, chartConfig, chartType){
 
+        if (!chartConfig) chartConfig = {};
+
+
         var getType = bluewave.chart.utils.getType;
         var getScale = bluewave.chart.utils.getScale;
         var getDateFormat = bluewave.chart.utils.getDateFormat;
@@ -126,7 +129,8 @@ bluewave.chart.utils = {
 
         let xType = getType(chartData[0][xKey]);
         if (chartType=="barChart" && xType == "date") xType = "string";
-        sb = getScale(xKey,xType,[0,axisWidth],chartData,minData);
+
+        sb = getScale(xKey,xType,[0,axisWidth],chartData,minData,null,chartConfig.xMin,chartConfig.xMax);
         x = sb.scale;
         xBand = sb.band;
 
@@ -256,22 +260,6 @@ bluewave.chart.utils = {
         };
 
 
-      //Render x-axis
-        var xFormat = getTickFormat(xType, chartConfig.xFormat);
-        xAxis = plotArea
-            .append("g")
-            .attr("transform", "translate(0," + axisHeight + ")")
-            .call(
-                d3.axisBottom(x)
-                .ticks(chartConfig.xTicks)
-                .tickValues(widthCheck ? null : x.domain().filter(tickFilter))
-                .tickFormat(xFormat)
-            );
-
-
-        if (!chartConfig.xFormat) updateDefaultTicks(xAxis, xType);
-
-
         var foundIntersection = function(boxes, buffer=0){
             var foundIntersection = false;
 
@@ -297,24 +285,88 @@ bluewave.chart.utils = {
             return foundIntersection;
         };
 
-      //Rotate x-axis labels as needed
-        var xBoxes = getBoxes(xAxis);
-        var xLabelsIntersect = foundIntersection(xBoxes, 3);
 
-        if (xLabelsIntersect){
-            xAxis
-            .selectAll("text")
-            .attr("transform", "translate(-10,0)rotate(-45)")
-            .style("text-anchor", "end");
+
+      //Render x-axis
+        var xFormat = getTickFormat(xType, chartConfig.xFormat);
+        var xTicks;
+        if (!(chartConfig.xTicks===true || chartConfig.xTicks===false)){
+            xTicks = chartConfig.xTicks;
         }
+        xAxis = plotArea
+            .append("g")
+            .attr("transform", "translate(0," + axisHeight + ")");
 
+        if (chartConfig.xTicks===false){
+            xAxis.call(
+                d3.axisBottom(x)
+                .ticks(xTicks)
+                .tickSize([0,0])
+            );
+
+            xAxis.selectAll("text").each(function(d, i) {
+                d3.select(this).remove();
+            });
+            xAxis.selectAll("path").each(function(d, i) {
+                d3.select(this).remove();
+            });
+
+        }
+        else{
+            xAxis.call(
+                d3.axisBottom(x)
+                .ticks(xTicks)
+                .tickValues(widthCheck ? null : x.domain().filter(tickFilter))
+                .tickFormat(xFormat)
+            );
+
+            if (!chartConfig.xFormat) updateDefaultTicks(xAxis, xType);
+
+
+          //Rotate x-axis labels as needed
+            var xBoxes = getBoxes(xAxis);
+            var xLabelsIntersect = foundIntersection(xBoxes, 0);
+
+            if (xLabelsIntersect){
+                xAxis
+                .selectAll("text")
+                .attr("transform", "translate(-10,0)rotate(-45)")
+                .style("text-anchor", "end");
+            }
+
+        }
 
 
       //Render y-axis
         var yFormat = getTickFormat(yType, chartConfig.yFormat);
         yAxis = plotArea
-            .append("g")
-            .call(scaleOption==="linear" ?
+            .append("g");
+
+        if (chartConfig.yTicks===false){
+
+
+            yAxis.call(scaleOption==="linear" ?
+                d3.axisLeft(y)
+                    .tickFormat(yFormat)
+                    .tickSize([0,0])
+                :
+                d3.axisLeft(y)
+                    .ticks(10, ",")
+                    .tickFormat(yFormat)
+                    .tickSize([0,0])
+            );
+
+            yAxis.selectAll("text").each(function(d, i) {
+                d3.select(this).remove();
+            });
+            yAxis.selectAll("path").each(function(d, i) {
+                d3.select(this).remove();
+            });
+
+        }
+        else{
+
+            yAxis.call(scaleOption==="linear" ?
                 d3.axisLeft(y).tickFormat(yFormat)
                 :
                 d3.axisLeft(y)
@@ -322,27 +374,28 @@ bluewave.chart.utils = {
                     .tickFormat(yFormat)
             );
 
-        if (!chartConfig.yFormat) updateDefaultTicks(yAxis, yType);
+            if (!chartConfig.yFormat) updateDefaultTicks(yAxis, yType);
 
-      //Hide every other y-tick if they're crowded
-        var yBoxes = getBoxes(yAxis);
-        var yLabelsIntersect = foundIntersection(yBoxes, 3);
+          //Hide every other y-tick if they're crowded
+            var yBoxes = getBoxes(yAxis);
+            var yLabelsIntersect = foundIntersection(yBoxes, -1);
 
-        if (yLabelsIntersect) {
+            if (yLabelsIntersect) {
 
-            let length = yAxis.selectAll("text").size();
+                let length = yAxis.selectAll("text").size();
 
-            yAxis
-                .selectAll("text")
-                .attr("visibility", function (text, i) {
-                    //Check cardinality to ensure top tick is always displayed
-                    if (length%2) {
-                        return (i + 1) % 2 === 0 ? "hidden" : "visible";
-                    }
-                    else return i % 2 === 0 ? "hidden" : "visible";
-                })
-
+                yAxis
+                    .selectAll("text")
+                    .attr("visibility", function (text, i) {
+                        //Check cardinality to ensure top tick is always displayed
+                        if (length%2) {
+                            return (i + 1) % 2 === 0 ? "hidden" : "visible";
+                        }
+                        else return i % 2 === 0 ? "hidden" : "visible";
+                    });
+            }
         }
+
 
       //Calculate margins required to fit the labels
         var xExtents = javaxt.dhtml.utils.getRect(xAxis.node());
@@ -364,6 +417,11 @@ bluewave.chart.utils = {
             bottom = Math.max(box.y+box.height, bottom);
         });
 
+        yAxis.selectAll("path").each(function(d, i) {
+            var box = javaxt.dhtml.utils.getRect(this);
+            top = Math.min(box.y, top);
+            bottom = Math.max(box.y+box.height, bottom);
+        });
 
         var marginLeft = xExtents.left-left; //extra space for the left-most x-axis label
         if (marginLeft<0) marginLeft = 0;
@@ -435,7 +493,7 @@ bluewave.chart.utils = {
   //**************************************************************************
   //** getScale
   //**************************************************************************
-    getScale : function(key, type, axisRange, chartData, minData, scaleOption){
+    getScale : function(key, type, axisRange, chartData, minData, scaleOption, _minVal, _maxVal){
         let scale;
         let band;
 
@@ -495,6 +553,14 @@ bluewave.chart.utils = {
                 if (scaleOption === "linear"){
 
                     if (minVal>0) minVal=0;
+
+                    if (!isNaN(_minVal)){
+                        minVal = _minVal;
+                    }
+
+                    if (!isNaN(_maxVal)){
+                        maxVal = _maxVal;
+                    }
 
                     scale = d3.scaleLinear()
                     .domain([minVal, maxVal]);
@@ -718,8 +784,8 @@ bluewave.chart.utils = {
   //**************************************************************************
   /** Returns a range of colors using a given set of colors
    *  @param numColors Number of colors to return
-   *  @param colors An array of colors (e.g. ["#f8f8f8", "#6699cc"]).
-   *  Minimum of 2 colors are required
+   *  @param colors An array of colors (e.g. ["#f8f8f8", "#6699cc"]). A
+   *  minimum of 2 colors are required
    */
     getColorRange: function(numColors, colors){
 
