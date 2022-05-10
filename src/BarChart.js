@@ -113,11 +113,18 @@ bluewave.charts.BarChart = function(parent, config) {
   //**************************************************************************
     this.update = function(chartConfig, data){
         me.clear();
-        me.setConfig(chartConfig);
+
+        if (arguments.length>1){
+            me.setConfig(chartConfig);
+        }
+        else{
+            data = arguments[0];
+        }
+
 
         var parent = svg.node().parentNode;
         onRender(parent, function(){
-            renderChart(data, parent);
+            renderChart(data);
         });
     };
 
@@ -125,13 +132,14 @@ bluewave.charts.BarChart = function(parent, config) {
   //**************************************************************************
   //** renderChart
   //**************************************************************************
-    var renderChart = function(data, parent){
+    var renderChart = function(data){
 
         var chartConfig = config;
 
 
-        var width = parent.offsetWidth;
-        var height = parent.offsetHeight;
+        var rect = javaxt.dhtml.utils.getRect(svg.node());
+        var width = rect.width;
+        var height = rect.height;
         var axisHeight = height;
         var axisWidth = width;
         plotArea = chart.append("g");
@@ -154,8 +162,14 @@ bluewave.charts.BarChart = function(parent, config) {
             yKey = xKey;
         }
         else{
-            xKey = chartConfig.xAxis;
-            yKey = chartConfig.yAxis;
+            if (layout === "horizontal") {
+                yKey = chartConfig.xAxis;
+                xKey = chartConfig.yAxis;
+            }
+            else{
+                xKey = chartConfig.xAxis;
+                yKey = chartConfig.yAxis;
+            }
         }
         if ((xKey===null || xKey===undefined) || (yKey===null || yKey===undefined)) return;
 
@@ -202,7 +216,7 @@ bluewave.charts.BarChart = function(parent, config) {
             });
 
         }
-        
+
         //Get sum of tallest bar
         //TODO: axis being set by first dataset - set with largest data
 
@@ -210,7 +224,7 @@ bluewave.charts.BarChart = function(parent, config) {
         var sort = chartConfig.sort;
         if (sort) {
             maxData.sort(function (a, b) {
-                return d3[sort](a.value, b.value)
+                return d3[sort](a.value, b.value);
             });
         };
 
@@ -537,7 +551,6 @@ bluewave.charts.BarChart = function(parent, config) {
                             .attr("y", getY)
                             .attr("height", function (d) {
 
-
                                 return y.bandwidth
                                     ? y.bandwidth()
                                     : height - getY(d);
@@ -686,7 +699,7 @@ bluewave.charts.BarChart = function(parent, config) {
       //Set bar transitions
         var animationSteps = chartConfig.animationSteps;
         if (!isNaN(animationSteps) && animationSteps>50){
-        
+
             //Persist original position/dimension attributes
             bars
                 .attr("yInitial", function () {
@@ -712,16 +725,16 @@ bluewave.charts.BarChart = function(parent, config) {
                     .attr("height", function () {
                         return parseFloat(this.getAttribute("heightInitial")) ;
                     });
- 
-                    
+
+
             }else if(layout === "horizontal"){
 
                 //Set bar width to 0 and position to y-axis
                 bars.attr("x", 0).attr("width", 0);
 
                 bars.transition().duration(animationSteps)
-                    .attr("width", function () { 
-                        return parseFloat(this.getAttribute("widthInitial")); 
+                    .attr("width", function () {
+                        return parseFloat(this.getAttribute("widthInitial"));
                     });
 
             }
@@ -770,7 +783,7 @@ bluewave.charts.BarChart = function(parent, config) {
 
             }, animationSteps)
         };
-        
+
 
         var getSiblings = function(bar){
             var arr = [];
@@ -856,10 +869,10 @@ bluewave.charts.BarChart = function(parent, config) {
         let opacity = lineConfig.opacity;
         let smoothing = lineConfig.smoothing;
 
-        
+
         var getX = function(d){
             var xoffset = x.bandwidth()/2;
-            
+
             if(keyType==="date"){
                 return x(new Date(d.key)) + xoffset;
             }else{
@@ -890,7 +903,7 @@ bluewave.charts.BarChart = function(parent, config) {
             }).entries(layer.data);
         let keyType = getType(sumData[0].key);
         if(keyType == "date") keyType = "string";
-  
+
 
         plotArea
             .append("path")
