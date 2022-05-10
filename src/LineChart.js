@@ -22,6 +22,7 @@ bluewave.charts.LineChart = function(parent, config) {
     };
     var svg, chart, plotArea;
     var x, y;
+    var xAxis, yAxis;
     var layers=[];
 
 
@@ -73,6 +74,22 @@ bluewave.charts.LineChart = function(parent, config) {
 
 
   //**************************************************************************
+  //** getXAxis
+  //**************************************************************************
+    this.getXAxis = function(){
+        return xAxis;
+    };
+
+
+  //**************************************************************************
+  //** getYAxis
+  //**************************************************************************
+    this.getYAxis = function(){
+        return yAxis;
+    };
+
+
+  //**************************************************************************
   //** clear
   //**************************************************************************
     this.clear = function(){
@@ -87,7 +104,7 @@ bluewave.charts.LineChart = function(parent, config) {
     this.update = function(){
         var parent = svg.node().parentNode;
         onRender(parent, function(){
-            renderChart(parent);
+            renderChart();
         });
     };
 
@@ -132,7 +149,7 @@ bluewave.charts.LineChart = function(parent, config) {
   //**************************************************************************
   //** renderChart
   //**************************************************************************
-    var renderChart = function(parent){
+    var renderChart = function(){
         clearChart();
 
         var chartConfig = config;
@@ -140,8 +157,9 @@ bluewave.charts.LineChart = function(parent, config) {
         if (data.length === 0) return;
 
 
-        var width = parent.offsetWidth;
-        var height = parent.offsetHeight;
+        var rect = javaxt.dhtml.utils.getRect(svg.node());
+        var width = rect.width;
+        var height = rect.height;
         var axisHeight = height;
         var axisWidth = width;
         plotArea = chart.append("g");
@@ -491,9 +509,14 @@ bluewave.charts.LineChart = function(parent, config) {
         arr.forEach(function(a){
             var sumData = a.sumData;
             xKeys.forEach(function(key){
-                
+
                 if (key instanceof Date && !stackValues) key = key+""; //hack to deal with dates as keys
-                
+                else{
+                    if (!isNaN(key) && !stackValues){
+                        key = key+"";
+                    }
+                }
+
 
                 for (var i=0; i<sumData.length; i++){
                     var d = sumData[i];
@@ -504,7 +527,7 @@ bluewave.charts.LineChart = function(parent, config) {
                       //Update minData array
                         var foundMatch = false;
                         for (var j=0; j<minData.length; j++){
-                            var entry = minData[j];                            
+                            var entry = minData[j];
                             if (entry.key==key){
                                 foundMatch = true;
                                 entry.value = Math.min(entry.value, val);
@@ -612,7 +635,8 @@ bluewave.charts.LineChart = function(parent, config) {
       //Get x and y functions from the axes
         x = axes.x;
         y = axes.y;
-
+        xAxis = axes.xAxis;
+        yAxis = axes.yAxis;
 
 
 
@@ -632,7 +656,7 @@ bluewave.charts.LineChart = function(parent, config) {
       //Draw areas under lines first!
         var fillGroup = plotArea.append("g");
         fillGroup.attr("name", "fill");
-        for (let i=0; i<arr.length; i++){
+        for (let i=arr.length-1; i>-1; i--){
 
             //if(stack) break;
             var sumData = arr[i].sumData;
@@ -769,7 +793,7 @@ bluewave.charts.LineChart = function(parent, config) {
                     });
             };
 
-            
+
           //Display end tags if checked
             if (showLabels){
                 var label = lineConfig.label;
@@ -779,7 +803,7 @@ bluewave.charts.LineChart = function(parent, config) {
                 chartElements[i].tag = createTag(sumData, lineColor, label, line);
 
             }
-        
+
         };
 
         //Add animations
@@ -799,7 +823,7 @@ bluewave.charts.LineChart = function(parent, config) {
             //     i = d3.interpolateString("0," + length, length + "," + length);
             //     return function (t) { return i(t); };
             // }
-            
+
             //Reset lines to y=0
             lines.attr("d", d3.line().x(getX).y(scaleY));
 
