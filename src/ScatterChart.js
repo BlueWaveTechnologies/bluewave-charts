@@ -51,7 +51,6 @@ bluewave.charts.ScatterChart = function(parent, config) {
   //**************************************************************************
     this.clear = function(){
         if (chart) chart.selectAll("*").remove();
-        config = merge({}, defaultConfig);
     };
 
 
@@ -87,19 +86,45 @@ bluewave.charts.ScatterChart = function(parent, config) {
     };
 
 
+  //**************************************************************************
+  //** getPointLabel
+  //**************************************************************************
+  /** Function that can be used to customize the label of a point for a given
+   *  data entry
+   */
     this.getPointLabel = function(d){
         return "";
     };
 
+
+  //**************************************************************************
+  //** getPointRadius
+  //**************************************************************************
+  /** Function that can be used to customize the radius of a point for a given
+   *  data entry
+   */
     this.getPointRadius = function(d){
         return config.pointRadius;
     };
 
 
+  //**************************************************************************
+  //** getPointColor
+  //**************************************************************************
+  /** Function that can be used to customize the color of a point for a given
+   *  data entry
+   */
     this.getPointColor = function(d){
         return config.pointColor;
     };
 
+
+  //**************************************************************************
+  //** getPointOpacity
+  //**************************************************************************
+  /** Function that can be used to customize the opacity of a point for a
+   *  given data entry
+   */
     this.getPointOpacity = function(d){
         return config.pointOpacity;
     };
@@ -113,6 +138,11 @@ bluewave.charts.ScatterChart = function(parent, config) {
     };
 
 
+  //**************************************************************************
+  //** onClick
+  //**************************************************************************
+  /** Called whenever a user clicks on a point
+   */
     this.onClick = function(el, datasetID, d){};
 
 
@@ -120,9 +150,6 @@ bluewave.charts.ScatterChart = function(parent, config) {
   //** renderChart
   //**************************************************************************
     var renderChart = function(data){
-
-
-
 
         var rect = javaxt.dhtml.utils.getRect(svg.node());
         var width = rect.width;
@@ -354,7 +381,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
         if (config.showRegLine) {
             var linReg = calculateLinReg(data, xKey, yKey,
                 d3.min(data, function(d) {return d[xKey]}),
-                d3.min(data, function(d) { return d[yKey]}), x, y)
+                d3.min(data, function(d) { return d[yKey]}), x, y);
 
 
             // let xScale = getScale(xKey,xType,[0,axisWidth], data).scale;
@@ -377,6 +404,42 @@ bluewave.charts.ScatterChart = function(parent, config) {
                     me.onClick(this, datasetID, d);
                 });
 
+        }
+
+
+
+
+      //Update scale and position as needed
+        var box = getMinMax(plotArea);
+        box.width = (box.maxX - box.minX)*1.1;
+        box.height = (box.maxY - box.minY)*1.1;
+        if (box.width>width || box.height>height){
+
+            var scale;
+            var widthDiff = box.width - width;
+            var heightDiff = box.height - height;
+
+            if (widthDiff > heightDiff){
+                scale = width/box.width;
+                if (scale>1){
+                    scale = 1+(1-scale);
+                }
+            }
+            else if (heightDiff > widthDiff) {
+                scale = height/box.height;
+            }
+
+
+            marginLeft = (marginLeft+(widthDiff/2))*scale;
+            marginTop = (marginTop+(heightDiff/2))*scale;
+
+
+          //Apply scaling and position
+            plotArea
+              .attr("transform",
+                "translate(" + marginLeft + "," + marginTop + ") " +
+                "scale(" + scale + ")"
+            );
         }
     };
 
@@ -446,6 +509,30 @@ bluewave.charts.ScatterChart = function(parent, config) {
         }
 
         return finalResults;
+    };
+
+
+  //**************************************************************************
+  //** getMinMax
+  //**************************************************************************
+    var getMinMax = function(g){
+        var minX = Number.MAX_VALUE;
+        var maxX = 0;
+        var minY = Number.MAX_VALUE;
+        var maxY = 0;
+        g.selectAll("*").each(function(){
+            var rect = javaxt.dhtml.utils.getRect(d3.select(this).node());
+            minX = Math.min(rect.left, minX);
+            maxX = Math.max(rect.right, maxX);
+            minY = Math.min(rect.top, minY);
+            maxY = Math.max(rect.bottom, maxY);
+        });
+        return {
+            minX: minX,
+            maxX: maxX,
+            minY: minY,
+            maxY: maxY
+        };
     };
 
 
