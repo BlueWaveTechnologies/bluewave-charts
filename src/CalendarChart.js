@@ -125,7 +125,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
   //** renderChart
   //**************************************************************************
     var renderChart = function(data){
-
+        me.clear();
         var chartConfig = config;
 
         var
