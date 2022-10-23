@@ -689,65 +689,85 @@ bluewave.chart.utils = {
         }
     },
 
+
   //**************************************************************************
   //** getType
   //**************************************************************************
+  /** Returns the data type associated with the given value (e.g. "string",
+   *  "date", or "number").
+   *  @param type Either a single object or an array of objects. In the case
+   *  of an array, loops through all the entries to check whether all the
+   *  entries are the same type.
+   */
     getType: function(value) {
 
-        var arr = javaxt.dhtml.utils.isArray(value) ? value : [value];
+        var getType = bluewave.chart.utils.getType;
+        var isArray = javaxt.dhtml.utils.isArray;
+        var validNumberRegex = /^[\+\-]?\d*\.?\d+(?:[Ee][\+\-]?\d+)?$/;
 
-        var getType = function(value){
-            let dataType;
+        if (isArray(value)){
+            var len = value.length;
 
-            const validNumberRegex = /^[\+\-]?\d*\.?\d+(?:[Ee][\+\-]?\d+)?$/;
+            var numbers = 0;
+            var dates = 0;
+            var strings = 0;
+            var noval = 0;
+            var other = 0;
+            value.forEach(function(val){
+                var dataType = getType(val);
+                switch (dataType) {
+                    case "string":
+                        var s = (val + "").trim();
+                        if (s.length===0 || s==="null"){
+                            noval++;
+                        }
+                        strings++;
+                        break;
+                    case "number":
+                        numbers++;
+                        break;
+                    case "date":
+                        dates++;
+                        break;
+                    default:
+                        other++;
+                        break;
+                }
+            });
+
+
+            if (dates===len || dates+noval===len) return "date";
+            if (numbers===len || numbers+noval===len) return "number";
+            if (strings===len) return "string";
+            return null;
+        }
+        else {
+
             switch (typeof value) {
                 case "string":
-                    if(value.match(validNumberRegex)){
-                        dataType =  "number";
-                    }else if (Date.parse(value)){
-                        dataType =  "date";
-                    }else{
-                        dataType = "string";
+                    if (value.match(validNumberRegex)){
+                        return "number";
+                    }
+                    else if (Date.parse(value)){
+                        return "date";
+                    }
+                    else{
+                        return "string";
                     }
                     break;
                 case "number":
-                    dataType = "number";
+                    return "number";
                     break;
                 case "object":
-                    dataType = "date";
+                    return "date";
                     break;
                 default:
                     break;
             }
-            return dataType;
-        };
 
-        var numbers = 0;
-        var dates = 0;
-        var strings = 0;
-        var other = 0;
-        arr.forEach(function(value){
-            var dataType = getType(value);
-            switch (dataType) {
-                case "string":
-                    strings++;
-                    break;
-                case "number":
-                    numbers++;
-                    break;
-                case "date":
-                    dates++;
-                    break;
-                default:
-                    other++;
-                    break;
-            }
-        });
+            return null;
+        }
 
-        if (dates==arr.length) return "date";
-        if (numbers==arr.length) return "number";
-        if (strings==arr.length) return "string";
-        return null;
     },
 
 
