@@ -1048,6 +1048,46 @@ bluewave.chart.utils = {
             };
         }
         return tooltip;
+    },
+
+
+  //**************************************************************************
+  //** setStyle
+  //**************************************************************************
+    setStyle: function(el, style){
+        if (el===null || el===0) return;
+        if (style===null) return;
+
+
+        var nodeName = el.nodeName;
+        if (!nodeName){
+            if (el.node){
+                el = el.node();
+                nodeName = el.nodeName;
+            }
+        }
+
+
+        //el.style = '';
+        //el.removeAttribute("style");
+
+
+        if (typeof style === 'string' || style instanceof String){
+            el.setAttribute("class", style);
+            //el.className = style;
+        }
+        else{
+            for (var key in style){
+                var val = style[key];
+
+                if (nodeName==="text"){
+                    if (key==="color") key = "fill";
+                }
+
+                el.setAttribute(key, val);
+            }
+        }
+
     }
 
 
