@@ -258,6 +258,7 @@ bluewave.charts.MapChart = function(parent, config) {
         }
     };
 
+
   //**************************************************************************
   //** setCenter
   //**************************************************************************
@@ -486,7 +487,6 @@ bluewave.charts.MapChart = function(parent, config) {
     };
 
 
-
   //**************************************************************************
   //** setExtent
   //**************************************************************************
@@ -650,7 +650,7 @@ bluewave.charts.MapChart = function(parent, config) {
                 renderLabelLayer(layer, g, path);
             }
             else if (layer.type === "grid"){
-                renderGridLayer(layer, g, path)
+                renderGridLayer(layer, g, path);
             }
         });
     };
@@ -840,8 +840,13 @@ bluewave.charts.MapChart = function(parent, config) {
         var style = layer.config.style;
         if (!style) style = {};
 
-        var tooltip;
-        if (config.showTooltip===true) tooltip = createTooltip();
+        var tooltip, getTooltipLabel;
+        if (config.showTooltip===true){
+            getTooltipLabel = config.getTooltipLabel;
+            if (getTooltipLabel){
+                tooltip = createTooltip();
+            }
+        }
 
 
         var highlight = false;
@@ -849,24 +854,10 @@ bluewave.charts.MapChart = function(parent, config) {
 
 
         var mouseover = function(feature, idx, siblings) {
-            var d = feature;
 
             if (tooltip){
-
-              //Get label
-                var label = me.getTooltipLabel(d.data);
-
-              //Get zIndex
-                var highestElements = getHighestElements();
-                var zIndex = highestElements.zIndex;
-                if (!highestElements.contains(tooltip.node())) zIndex++;
-
-              //Update tooltip
-                tooltip
-                .html(label)
-                .style("opacity", 1)
-                .style("display", "block")
-                .style("z-index", zIndex);
+                var label = getTooltipLabel(feature);
+                tooltip.html(label).show();
             }
 
             var el = d3.select(this);
@@ -884,6 +875,7 @@ bluewave.charts.MapChart = function(parent, config) {
 
         var mousemove = function() {
             var e = d3.event;
+
             if (tooltip) tooltip
             .style('top', (e.clientY) + "px")
             .style('left', (e.clientX + 20) + "px");
