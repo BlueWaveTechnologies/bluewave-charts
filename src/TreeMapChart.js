@@ -5,7 +5,8 @@ if(!bluewave.charts) bluewave.charts={};
 //**  TreeMapChart
 //******************************************************************************
 /**
- *   Panel used to create tree map charts
+ *   Chart used to display hierarchical data using nested rectangles. Provides
+ *   an option to render hierarches using voronoi tesselations/partitions.
  *
  ******************************************************************************/
 
@@ -15,6 +16,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
     var defaultConfig = {
         key: "name",
         value: "value",
+        shape: "square", //vs circle
         groupBy: null,
         colors: d3.schemeCategory10,
         keyLabel: true,
@@ -36,7 +38,10 @@ bluewave.charts.TreeMapChart = function(parent, config) {
         }
     };
     var svg, plotArea;
-    var groupNames = [];
+
+    var tooltip;
+    var getColor;
+    var cells;
 
 
   //**************************************************************************
@@ -61,6 +66,12 @@ bluewave.charts.TreeMapChart = function(parent, config) {
         if (!chartConfig) config = defaultConfig;
         else config = merge(chartConfig, defaultConfig);
 
+        if (config.showTooltip===true){
+            tooltip = createTooltip();
+        }
+        else{
+            tooltip = false;
+        }
     };
 
 
@@ -121,6 +132,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
   //**************************************************************************
     this.clear = function(){
         if (plotArea) plotArea.selectAll("*").remove();
+        cells = null;
     };
 
 
@@ -143,14 +155,16 @@ bluewave.charts.TreeMapChart = function(parent, config) {
   //**************************************************************************
     this.getGroup = function(groupName){
         var arr = [];
-        plotArea.selectAll("rect").each(function(n) {
-            if (n.data.group===groupName){
-                arr.push({
-                    rect: d3.select(this).node(),
-                    data: n.data
-                });
-            }
-        });
+        if (cells){
+            cells.each(function(n) {
+                if (n.data.group===groupName){
+                    arr.push({
+                        rect: d3.select(this).node(),
+                        data: n.data
+                    });
+                }
+            });
+        }
         return arr;
     };
 
@@ -193,7 +207,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
    */
     var getDataHierarchy = function(data){
 
-        groupNames = [];
+        var groupNames = [];
         var groupsToUse;
         if (config.groupBy !== null){
           //populate groupNames by filtering through the config-set dataset 'groupBy'
@@ -210,6 +224,8 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
             groupsToUse = groupNames.filter(onlyUnique);
         }
+
+
 
       //Update value fields in the data
         data.forEach((d)=>{
@@ -273,7 +289,20 @@ bluewave.charts.TreeMapChart = function(parent, config) {
             });
 
         };
-        return dataHierarchy;
+
+
+      //Compute hierarchy where the size of each leaf is defined by the 'value' field
+        var root = d3.hierarchy(dataHierarchy).sum((d) => d.value );
+        var leaves = root.leaves();
+        var descendants = root.descendants().filter((d) => d.depth==1 );
+
+
+        return {
+            root: root,
+            leaves: leaves,
+            descendants: descendants,
+            groupNames: groupNames
+        };
     };
 
 
@@ -282,28 +311,47 @@ bluewave.charts.TreeMapChart = function(parent, config) {
   //**************************************************************************
     var renderChart = function(data){
 
-        var chartConfig = config;
-
-
-      //Get parent width/height
-        var rect = javaxt.dhtml.utils.getRect(svg.node());
-        var width = rect.width;
-        var height = rect.height;
-
-
+      //Convert data into a hierarchical dataset
         data = getDataHierarchy(data);
 
 
-        // Give the data to this cluster layout:
-        var root = d3.hierarchy(data).sum((d) => d.value ); // Here the size of each leave is given in the 'value' field in input data
+
+      //Create getColor function used to set cell color
+        var groupNames = data.groupNames;
+        if (typeof(groupNames) !== "undefined"){
+            getColor = d3.scaleOrdinal()
+                .domain(groupNames)
+                .range(config.colors);
+        }
+        else{
+            getColor = d3.scaleOrdinal()
+                .range(config.colors);
+        };
 
 
-        var descendants = root.descendants().filter((d) => d.depth==1 );
+      //Get dimensions of the svg element
+        var rect = javaxt.dhtml.utils.getRect(svg.node());
 
 
-      //Set group padding
+      //Render chart
+        if (config.shape==="circle"){
+            renderVoronoi(data, rect);
+        }
+        else{
+            renderTiles(data, rect);
+        }
+    };
+
+
+  //**************************************************************************
+  //** renderTiles
+  //**************************************************************************
+    var renderTiles = function(data, rect){
+
+
+      //Calculate group padding using a phantom/temporary element
         var groupPadding = 0;
-        if (chartConfig.groupLabel && descendants.length>1){
+        if (config.groupLabel && data.descendants.length>1){
             var text = plotArea.append("text")
             .attr("x", 0)
             .attr("y", 0)
@@ -316,24 +364,13 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
 
 
-
-        // Use d3.treemap to compute the position of each element of the hierarchy
+      //Compute treemap
         d3.treemap()
-            .size([width, height])
+            .size([rect.width, rect.height])
             .paddingTop(groupPadding)
             .paddingInner(0) //Padding between each rectangle
-            (root);
+            (data.root);
 
-        // color scale
-        if (typeof(groupNames) !== "undefined"){
-            var color = d3.scaleOrdinal()
-                .domain(groupNames)
-                .range(chartConfig.colors);
-        }
-        else{
-            var color = d3.scaleOrdinal()
-                .range(chartConfig.colors);
-        };
 
 
         // opacity scale
@@ -354,39 +391,12 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
 
 
-        var tooltip;
-        if (config.showTooltip===true){
-            tooltip = createTooltip();
-        }
 
-        var mouseover = function(d, i) {
-            if (tooltip){
-                //let rect = d3.select(this);
-                var label = me.getTooltipLabel(d.data, i);
-                tooltip.html(label).show();
-            }
-            d3.select(this).transition().duration(100).attr("opacity", "0.8");
-        };
-
-        var mousemove = function() {
-            var e = d3.event;
-            if (tooltip) tooltip
-            .style('top', (e.clientY) + "px")
-            .style('left', (e.clientX + 20) + "px");
-        };
-
-        var mouseleave = function() {
-            if (tooltip) tooltip.hide();
-            d3.select(this).transition().duration(100).attr("opacity", "1");
-        };
-
-
-
-      //Add rectangles
-        var rectangles =
+      //Add cells
+        cells =
             plotArea
             .selectAll("rect")
-            .data(root.leaves())
+            .data(data.leaves)
             .enter()
             .append("rect")
             .attr('x', (d) => d.x0 )
@@ -394,18 +404,15 @@ bluewave.charts.TreeMapChart = function(parent, config) {
             .attr('width', (d) => d.x1 - d.x0 )
             .attr('height', (d) => d.y1 - d.y0 )
             .style("stroke", "white")
-            .style("fill", (d) => color(d.parent.data.name) )
+            .style("fill", (d) => getColor(d.parent.data.name) )
             .style("opacity", (d) => opacity(d.data.value, d.data.group) )
-            .attr("rectID", function(d, i, arr){
-                return i;
-            })
             .on("mouseover", mouseover)
             .on("mousemove", mousemove)
             .on("mouseleave", mouseleave)
-            .on("click", function(d){
+            .on("click", function(e, d){
                 me.onClick(this, d.data);
             })
-            .on("dblclick", function(d){
+            .on("dblclick", function(e, d){
                 me.onDblClick(this, d.data);
             });
 
@@ -416,9 +423,9 @@ bluewave.charts.TreeMapChart = function(parent, config) {
       //Add labels
         var yOffsets = [];
         var labelPadding = 3;
-        if (chartConfig.keyLabel){
+        if (config.keyLabel){
 
-            rectangles.each(function(n) {
+            cells.each(function(n) {
                 var label = me.getKeyLabel(n.data.name, n.data);
 
               //Get cell dimensions
@@ -471,11 +478,11 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
 
       //Add values
-        if (chartConfig.valueLabel){
+        if (config.valueLabel){
 
-            rectangles.each(function(n, i) {
+            cells.each(function(n, i) {
                 var yOffset = yOffsets[i];
-                if (yOffset===0 && chartConfig.keyLabel) return;
+                if (yOffset===0 && config.keyLabel) return;
 
                 var label = me.getValueLabel(n.data.value, n.data);
 
@@ -523,18 +530,18 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
 
       //Add group labels
-        if (chartConfig.groupLabel && groupPadding>0){
+        if (config.groupLabel && groupPadding>0){
 
             var groupLabels =
             plotArea
             .selectAll("titles")
-            .data(descendants)
+            .data(data.descendants)
             .enter()
             .append("text")
             .attr("x", (d) => d.x0+1)
             .attr("y", (d) => d.y0+groupPadding-labelPadding)
             .text((d) => d.data.name )
-            .attr("fill",  (d) => color(d.data.name) );
+            .attr("fill",  (d) => getColor(d.data.name) );
 
 
             var arr = [];
@@ -569,6 +576,256 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
         };
 
+    };
+
+
+  //**************************************************************************
+  //** renderVoronoi
+  //**************************************************************************
+  /** Used to render a Voronoi treemap, clipped to a circle. Requires the
+   *  d3-voronoi-treemap plugin. More info here:
+   *  https://github.com/Kcnarf/d3-voronoi-treemap
+   */
+    var renderVoronoi = function(data, rect){
+
+
+      //Set dimensions
+        var width = rect.width;
+        var height = rect.height;
+        var radius = (Math.min(width, height)/2)-5;
+        var center = [width/2, height/2];
+
+
+
+      //Create container for the treemap
+        var treemapContainer = plotArea.append("g")
+        .attr("transform", "translate("+center+")");
+
+
+      //Create polygon for the perimeter circle
+        var polygon = getPoints(60, radius);
+
+
+      //Render outer circle
+        treemapContainer.append("path")
+        .attr("transform", "translate("+[-radius,-radius]+")")
+        .attr("d", "M"+polygon.join(",")+"Z");
+
+
+
+
+      //Compute voronoi treemap, clipped to the outer polygon
+        d3.voronoiTreemap().clip(polygon)(data.root);
+
+
+
+      //Render cells
+        cells =
+            treemapContainer.append("g")
+            .attr("transform", "translate("+[-radius,-radius]+")")
+            .selectAll("path")
+            .data(data.leaves)
+            .enter()
+            .append("path")
+            .attr("d", function(d){ return "M"+d.polygon.join(",")+"z"; })
+            .style("fill", (d) => getColor(d.parent.data.name))
+            .style("stroke", "white")
+            .on("mouseover", mouseover)
+            .on("mousemove", mousemove)
+            .on("mouseleave", mouseleave)
+            .on("click", function(e, d){
+                me.onClick(this, d.data);
+            })
+            .on("dblclick", function(e, d){
+                me.onDblClick(this, d.data);
+            });
+
+
+
+
+      //Create label group and compute centroids as needed
+        var labelGroup;
+        var centroids;
+        if (config.keyLabel || config.valueLabel){
+
+            labelGroup = treemapContainer.append("g")
+            .attr("transform", "translate("+[-radius,-radius]+")");
+
+            centroids = [];
+            cells.each(function(n) {
+                var centroid = d3.polygonCentroid(n.polygon);
+                centroids.push(centroid);
+            });
+        }
+
+
+
+      //Add key labels
+        var yOffsets = [];
+        if (config.keyLabel){
+
+            cells.each(function(n, i) {
+
+
+              //Create label
+                var label = me.getKeyLabel(n.data.name, n.data);
+                var centroid = centroids[i];
+                var text = labelGroup.append("text")
+                .attr("x", centroid[0] )
+                .attr("y", centroid[1] )
+                .attr("text-anchor", "middle")
+                .attr("dominant-baseline", "middle")
+                .text(label);
+
+
+              //Update label style
+                setStyle(text, config.style.keyLabel);
+
+
+              //Set yOffset
+                var yOffset = 0;
+                if (intersects(text, n)){
+                    text.remove();
+                }
+                else{
+                    var t = text.node().getBBox();
+                    yOffset = t.y + t.height + 4; //+4 = extra padding
+                }
+
+                yOffsets.push(yOffset);
+
+            });
+        }
+
+
+      //Add value labels
+        if (config.valueLabel){
+
+            cells.each(function(n, i) {
+                var yOffset = yOffsets[i];
+                if (yOffset===0 && config.keyLabel) return;
+
+              //Create label
+                var label = me.getValueLabel(n.data.value, n.data);
+                var centroid = centroids[i];
+                var text = labelGroup.append("text")
+                .attr("x", centroid[0] )
+                .attr("y", yOffset )
+                .attr("text-anchor", "middle")
+                .attr("dominant-baseline", "middle")
+                .text(label);
+
+
+              //Update label style
+                setStyle(text, config.style.valueLabel);
+
+                var t = text.node().getBBox();
+                if (t.y<yOffset){
+                    text.attr("y", yOffset);
+                }
+
+                if (intersects(text, n)){
+                    text.remove();
+                }
+
+            });
+        }
+
+    };
+
+
+  //**************************************************************************
+  //** getPoints
+  //**************************************************************************
+  /** Returns a array of coordinates representing a circle
+   */
+    var getPoints = function(numPoints, radius) {
+
+        var increment = (2*Math.PI)/numPoints;
+        var points = [];
+
+        for (var a=0, i=0; i<numPoints; i++, a+=increment) {
+            points.push(
+                [radius + radius*Math.cos(a), radius + radius*Math.sin(a)]
+            );
+        }
+
+      	return points;
+    };
+
+
+  //**************************************************************************
+  //** mouseover
+  //**************************************************************************
+    var mouseover = function(e, d) {
+        if (tooltip){
+            var i = cells.nodes().indexOf(this);
+            var label = me.getTooltipLabel(d.data, i);
+            tooltip.html(label).show();
+        }
+        d3.select(this).transition().duration(100).attr("opacity", "0.8");
+    };
+
+
+  //**************************************************************************
+  //** mousemove
+  //**************************************************************************
+    var mousemove = function(e) {
+        //var e = d3.event;
+        if (tooltip) tooltip
+        .style('top', (e.clientY) + "px")
+        .style('left', (e.clientX + 20) + "px");
+    };
+
+
+  //**************************************************************************
+  //** mouseleave
+  //**************************************************************************
+    var mouseleave = function() {
+        if (tooltip) tooltip.hide();
+        d3.select(this).transition().duration(100).attr("opacity", "1");
+    };
+
+
+    var intersects = function(text, n){
+
+      //Get label dimensions
+        var t = text.node().getBBox();
+        var p = [
+            [t.x, t.y],
+            [t.x+t.width, t.y],
+            [t.x+t.width, t.y+t.height],
+            [t.x, t.y+t.height],
+            [t.x, t.y]
+        ];
+
+
+      //Get intersection between the label and cell
+        var clip = bluewave.chart.utils.clipPolygon(n.polygon, p);
+
+
+
+      //Remove label if the label is bigger than the cell
+        var removeLabel = true;
+        if (clip){
+            if (clip.length===5){
+                var numMatches = 0;
+                for (var i=0; i<clip.length; i++){
+                    var a = clip[i];
+                    var b = p[i];
+                    if (a[0]===b[0] && a[1]===b[1]){
+                        numMatches++;
+                    }
+                }
+                if (numMatches===5){
+                    removeLabel = false;
+                }
+            }
+        }
+        else{
+            removeLabel = false;
+        }
+        return removeLabel;
     };
 
 
