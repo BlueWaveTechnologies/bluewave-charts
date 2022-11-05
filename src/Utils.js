@@ -1088,7 +1088,65 @@ bluewave.chart.utils = {
             }
         }
 
-    }
+    },
 
+
+  //**************************************************************************
+  //** clipPolygon
+  //**************************************************************************
+  /** Returns a polygon representing the area of intersection between two
+   *  polygons. Assumes the two polygons are convex. Returns null if the two
+   *  polygons do not intersect. Credit:
+   *  https://observablehq.com/@d3/polygonclip
+   *
+   *  @param clip An array of points representing a polygon. Example:
+   *  [[210, 90], [110, 400], [420, 400], ... ]. The first point should be the
+   *  same as the last (i.e. the first and last point are coicident).
+   *
+   *  @param subject An array of points representing a polygon.
+   */
+    clipPolygon: function(clip, subject) {
+
+        function lineOrient([px, py], [ax, ay], [bx, by]) {
+            return (bx - ax) * (py - ay) < (by - ay) * (px - ax);
+        }
+
+        function lineIntersect([ax, ay], [bx, by], [cx, cy], [dx, dy]) {
+            const bax = bx - ax, bay = by - ay, dcx = dx - cx, dcy = dy - cy;
+            const k = (bax * (cy - ay) - bay * (cx - ax)) / (bay * dcx - bax * dcy);
+            return [cx + k * dcx, cy + k * dcy];
+        }
+
+        function polygonClosed(points) {
+            const [ax, ay] = points[0], [bx, by] = points[points.length - 1];
+            return ax === bx && ay === by;
+        }
+
+        const closed = polygonClosed(subject);
+        const n = clip.length - polygonClosed(clip);
+        subject = subject.slice(); // copy before mutate
+        for (let i = 0, a = clip[n - 1], b, c, d; i < n; ++i) {
+          const input = subject.slice();
+          const m = input.length - closed;
+          subject.length = 0;
+          b = clip[i];
+          c = input[m - 1];
+          for (let j = 0; j < m; ++j) {
+            d = input[j];
+            if (lineOrient(d, a, b)) {
+              if (!lineOrient(c, a, b)) {
+                subject.push(lineIntersect(c, d, a, b));
+              }
+              subject.push(d);
+            } else if (lineOrient(c, a, b)) {
+              subject.push(lineIntersect(c, d, a, b));
+            }
+            c = d;
+          }
+          if (closed) subject.push(subject[0]);
+          a = b;
+        }
+        return subject.length ? subject : null;
+    }
 
 };
