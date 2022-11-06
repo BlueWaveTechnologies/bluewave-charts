@@ -824,35 +824,35 @@ bluewave.chart.utils = {
         if (typeof n === "string"){
             if (bluewave.chart.utils.isDate(n)) return parseFloat(null);
 
-            //return parseFloat(n.replace(/[^0-9.-]+/g,""));
+            if (bluewave.chart.utils.isCurrency(n)){
 
-            var dotPos = n.indexOf('.');
-            var commaPos = n.indexOf(',');
+                var dotPos = n.indexOf('.');
+                var commaPos = n.indexOf(',');
 
-            if (dotPos < 0)
-                dotPos = 0;
+                if (dotPos < 0)
+                    dotPos = 0;
 
-            if (commaPos < 0)
-                commaPos = 0;
+                if (commaPos < 0)
+                    commaPos = 0;
 
-            var sep;
-            if ((dotPos > commaPos) && dotPos)
-                sep = dotPos;
-            else {
-                if ((commaPos > dotPos) && commaPos)
-                    sep = commaPos;
-                else
-                    sep = false;
+                var sep;
+                if ((dotPos > commaPos) && dotPos)
+                    sep = dotPos;
+                else {
+                    if ((commaPos > dotPos) && commaPos)
+                        sep = commaPos;
+                    else
+                        sep = false;
+                }
+
+                if (sep == false)
+                    return parseFloat(n.replace(/[^\d]/g, ""));
+
+                return parseFloat(
+                    n.substr(0, sep).replace(/[^\d]/g, "") + '.' +
+                    n.substr(sep+1, n.length).replace(/[^0-9]/, "")
+                );
             }
-
-            if (sep == false)
-                return parseFloat(n.replace(/[^\d]/g, ""));
-
-            return parseFloat(
-                n.substr(0, sep).replace(/[^\d]/g, "") + '.' +
-                n.substr(sep+1, n.length).replace(/[^0-9]/, "")
-            );
-
         }
         return parseFloat(n);
     },
@@ -890,6 +890,15 @@ bluewave.chart.utils = {
     isCurrency: function(n) {
         if (bluewave.chart.utils.isNumber(n)) return true;
         if (typeof n !== "string") n = ""+n;
+
+        if (n.indexOf("\r")>-1 || n.indexOf("\n")>-1) return false;
+        var wordCount = 0;
+        n.split(" ").forEach((word)=>{
+            word = word.trim();
+            if (word.length>0) wordCount++;
+        });
+        if (wordCount>3) return false;
+
         return bluewave.chart.utils.isNumber(n.replace(/[^0-9.-]+/g,""));
     },
 
