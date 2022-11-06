@@ -5,7 +5,7 @@ if(!bluewave.charts) bluewave.charts={};
 //**  PieChart
 //******************************************************************************
 /**
- *   Panel used to create pie charts
+ *   Circle chart that uses pie slices to show relative sizes of data.
  *
  ******************************************************************************/
 
@@ -16,6 +16,22 @@ bluewave.charts.PieChart = function(parent, config) {
         pieKey: "key",
         pieValue: "value",
         pieCutout: 0.0,
+
+      /** Used to indicate whether to sort the slices by either "key" or "value".
+       *  If niether a "key" or "value" is specified, nothing will be sorted.
+       */
+        pieSort: false,
+
+      /** Used to indicate the sort direction. Options are either "ascending" or
+       *  "descending". Only applied when the pieSort is set to "key" or "value".
+       */
+        pieSortDir: "ascending",
+
+      /** Used to specify the maximum number of slices to render in the chart.
+       *  This config is specified as an integer value.
+       */
+        maximumSlices: null,
+
         showLabels: true,
         labelOffset: 100,
         lineColor: "#777",
@@ -109,51 +125,79 @@ bluewave.charts.PieChart = function(parent, config) {
         if (isArray(data) && isArray(data[0])) data = data[0];
         if (!config.pieKey || !config.pieValue) return;
 
+
+
+      //Simplify data
+        var pieData = [];
+        var values = [];
+        data.forEach((d)=>{
+            var key = d[config.pieKey];
+            var val = d[config.pieValue];
+            pieData.push({
+                key: key,
+                value: val
+            });
+            values.push(val);
+        });
+
+
+      //Convert values to numbers as needed
+        var t = getType(values);
+        if (t==="number"){
+            pieData.forEach((d)=>{
+                var val = parseFloat(d.value);
+                if (isNaN(val)) val = 0; //?
+                d.value = val;
+            });
+        }
+
+
+
       //Sort values as needed
-        var pieSort = config.pieSort;
-        pieSort = (pieSort+"").toLowerCase();
+        var pieSort = (config.pieSort+"").toLowerCase();
         var sortDir = (config.pieSortDir+"").toLowerCase();
+        var maxSlices = parseFloat(config.maximumSlices);
         if (pieSort === "key") {
-            data.sort(function(a, b){
-                return sort(a[config.pieKey],b[config.pieKey],sortDir);
+            pieData.sort(function(a, b){
+                return sort(a.key,b.key,sortDir);
             });
         }
         else if(pieSort === "value") {
-            data = data.sort(function(a,b){
-                a = parseFloat(a[config.pieValue]);
-                b = parseFloat(b[config.pieValue]);
-                return sort(a,b,sortDir);
+            pieData.sort(function(a,b){
+                return sort(a.value,b.value,sortDir);
             });
+        }
+        else{
+            maxSlices = null;
         }
 
 
 
       //Truncate data as needed
-        var numSlices = data.length;
-        var maxSlices = parseFloat(config.maximumSlices);
+        var numSlices = pieData.length;
         var hasOther = false;
         if (!isNaN(maxSlices) && maxSlices>0) {
             if (maxSlices<numSlices){
 
                 var otherSlices;
                 if (sortDir==="descending"){
-                    otherSlices = data.slice(maxSlices);
-                    data = data.slice(0, maxSlices);
+                    otherSlices = pieData.slice(maxSlices);
+                    pieData = pieData.slice(0, maxSlices);
                 }
                 else{
-                    otherSlices = data.slice(0, numSlices-maxSlices);
-                    data = data.slice(numSlices-maxSlices, numSlices);
+                    otherSlices = pieData.slice(0, numSlices-maxSlices);
+                    pieData = pieData.slice(numSlices-maxSlices, numSlices);
                 }
 
                 if (config.showOther===true){
 
                     var otherSlicesValue = 0;
                     otherSlices.forEach(function(d){
-                        var val = parseFloat(d[config.pieValue]);
+                        var val = d.value;
                         if (!isNaN(val)) otherSlicesValue+=val;
                     });
 
-                    data.push({[config.pieKey]: "Other", [config.pieValue]: otherSlicesValue});
+                    pieData.push({key: "Other", value: otherSlicesValue});
                     hasOther = true;
                 }
 
@@ -163,15 +207,9 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
 
-        let pieData = data.reduce((acc,curVal)=>{
-            acc[curVal[config.pieKey]] = curVal[config.pieValue];
-            return acc;
-        },{});
-
         var padding = 0;
         if (typeof config.piePadding !== "undefined") {
             padding = config.piePadding * Math.PI / 180;
-
         }
 
         var pie = d3.pie().value(function (d) {
@@ -182,7 +220,9 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
 
-        pieData = pie(d3.entries(pieData));
+        pieData = pie(pieData);
+
+
 
       //Get parent width/height
         var rect = javaxt.dhtml.utils.getRect(svg.node());
@@ -212,7 +252,7 @@ bluewave.charts.PieChart = function(parent, config) {
         }
 
 
-        var mouseover = function(d) {
+        var mouseover = function(e, d) {
             if (tooltip){
                 var label = me.getTooltipLabel(d.data);
                 tooltip.html(label).show();
@@ -220,8 +260,7 @@ bluewave.charts.PieChart = function(parent, config) {
             d3.select(this).transition().duration(100).attr("opacity", "0.8");
         };
 
-        var mousemove = function() {
-            var e = d3.event;
+        var mousemove = function(e) {
             if (tooltip) tooltip
             .style('top', (e.clientY) + "px")
             .style('left', (e.clientX + 20) + "px");
@@ -282,7 +321,13 @@ bluewave.charts.PieChart = function(parent, config) {
 
       //Render lines and labels as needed
         var showLabels = config.showLabels===true ? true : false;
+        var labelGroup;
         if (showLabels && pieData[0].data.key !== "undefined" && !isNaN(pieData[0].value)){
+
+          //Create label group
+            labelGroup = pieChart.append("g");
+            labelGroup.attr("name", "labels");
+
 
             var labelOffset = parseFloat(config.labelOffset);
             if (isNaN(labelOffset) || labelOffset<0) labelOffset = 100;
@@ -381,8 +426,6 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
           //Add the labels
-            var labelGroup = pieChart.append("g");
-            labelGroup.attr("name", "labels");
             labelGroup.selectAll("*")
             .data(pieData)
             .enter()
@@ -485,22 +528,23 @@ bluewave.charts.PieChart = function(parent, config) {
 
         };
 
-        //Add animations
+
+      //Add animations
         var animationSteps = config.animationSteps;
         if (!isNaN(animationSteps) && animationSteps > 50) {
 
-          var totalDelay = 0;
-          animationSteps /= 2;
-          var arcs = pieGroup.selectAll("path");
+            var totalDelay = 0;
+            animationSteps /= 2;
+            var arcs = pieGroup.selectAll("path");
 
 
-          var zeroaArc = d3.arc()
-         .innerRadius(0)
-         .outerRadius(0);
-         //Reset arcs
-          arcs.attr("d", zeroaArc);
+            var zeroaArc = d3.arc()
+           .innerRadius(0)
+           .outerRadius(0);
+           //Reset arcs
+            arcs.attr("d", zeroaArc);
 
-          arcs
+            arcs
             .transition().delay(function (d, i) {
               var angleDiff = Math.abs(d.startAngle - d.endAngle) + (d.padAngle);
               var angleRatio = angleDiff / (2 * Math.PI);
@@ -611,6 +655,7 @@ bluewave.charts.PieChart = function(parent, config) {
     var onRender = javaxt.dhtml.utils.onRender;
     var isArray = javaxt.dhtml.utils.isArray;
     var initChart = bluewave.chart.utils.initChart;
+    var getType = bluewave.chart.utils.getType;
     var createTooltip = bluewave.chart.utils.createTooltip;
 
     init();
