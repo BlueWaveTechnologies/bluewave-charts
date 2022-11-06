@@ -143,9 +143,9 @@ bluewave.charts.PieChart = function(parent, config) {
 
       //Convert values to numbers as needed
         var t = getType(values);
-        if (t==="number"){
+        if (t==="number" || t==="currency"){
             pieData.forEach((d)=>{
-                var val = parseFloat(d.value);
+                var val = bluewave.chart.utils.parseFloat(d.value);
                 if (isNaN(val)) val = 0; //?
                 d.value = val;
             });
