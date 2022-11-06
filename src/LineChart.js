@@ -1107,7 +1107,7 @@ bluewave.charts.LineChart = function(parent, config) {
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var onRender = javaxt.dhtml.utils.onRender;
+    var onRender = bluewave.chart.utils.onRender;
 
     var initChart = bluewave.chart.utils.initChart;
     var getType = bluewave.chart.utils.getType;

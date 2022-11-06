@@ -400,7 +400,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
    //** Utils
    //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var onRender = javaxt.dhtml.utils.onRender;
+    var onRender = bluewave.chart.utils.onRender;
     var initChart = bluewave.chart.utils.initChart;
     var createTooltip = bluewave.chart.utils.createTooltip;
     var getColorRange = bluewave.chart.utils.getColorRange;

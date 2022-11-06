@@ -29,7 +29,7 @@ bluewave.chart.utils = {
                 .classed("svg-content-responsive", true);
 
 
-            javaxt.dhtml.utils.onRender(parent, function(){
+            bluewave.chart.utils.onRender(parent, function(){
                 var width = parent.offsetWidth;
                 var height = parent.offsetHeight;
                 svg.attr("viewBox", `0 0 ${width} ${height}`);
@@ -39,6 +39,36 @@ bluewave.chart.utils = {
 
         var g = svg.append("g");
         if (callback) callback.apply(scope,[svg, g]);
+    },
+
+
+  //**************************************************************************
+  //** onRender
+  //**************************************************************************
+  /** Used to check whether DOM element has been added to the document. Calls
+   *  a callback if it exists or when it is added.
+   */
+    onRender: function(el, callback){
+        var w = el.offsetWidth;
+        if (w===0 || isNaN(w)){
+            var timer;
+
+            var checkWidth = function(){
+                var w = el.offsetWidth;
+                if (w===0 || isNaN(w)){
+                    timer = setTimeout(checkWidth, 100);
+                }
+                else{
+                    clearTimeout(timer);
+                    if (callback) callback.apply(el, [el]);
+                }
+            };
+
+            timer = setTimeout(checkWidth, 100);
+        }
+        else{
+            if (callback) callback.apply(el, [el]);
+        }
     },
 
 
@@ -705,7 +735,7 @@ bluewave.chart.utils = {
         var isDate = bluewave.chart.utils.isDate;
         var isNumber = bluewave.chart.utils.isNumber;
         var isCurrency = bluewave.chart.utils.isCurrency;
-        var isArray = javaxt.dhtml.utils.isArray;
+        var isArray = bluewave.chart.utils.isArray;
 
         if (isArray(value)){
             var len = value.length;
@@ -825,6 +855,18 @@ bluewave.chart.utils = {
 
         }
         return parseFloat(n);
+    },
+
+
+  //**************************************************************************
+  //** isArray
+  //**************************************************************************
+  /** Used to check whether a given object is an array. Note that this check
+   *  does not use the "instanceof Array" approach because of issues with
+   *  frames.
+   */
+    isArray: function(obj){
+        return (Object.prototype.toString.call(obj)==='[object Array]');
     },
 
 

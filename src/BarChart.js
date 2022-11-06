@@ -928,7 +928,7 @@ bluewave.charts.BarChart = function(parent, config) {
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var onRender = javaxt.dhtml.utils.onRender;
+    var onRender = bluewave.chart.utils.onRender;
 
     var initChart = bluewave.chart.utils.initChart;
     var drawAxes = bluewave.chart.utils.drawAxes;

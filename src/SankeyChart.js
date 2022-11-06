@@ -28,7 +28,7 @@ bluewave.charts.SankeyChart = function(parent, config) {
     var nodes = [];
     var links = [];
     var getColor = d3.scaleOrdinal(d3.schemeCategory10);
-    
+
 
   //**************************************************************************
   //** Constructor
@@ -51,8 +51,8 @@ bluewave.charts.SankeyChart = function(parent, config) {
         if (!chartConfig) config = defaultConfig;
         else config = merge(chartConfig, defaultConfig);
     };
-    
-    
+
+
   //**************************************************************************
   //** getChart
   //**************************************************************************
@@ -311,7 +311,7 @@ bluewave.charts.SankeyChart = function(parent, config) {
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var onRender = javaxt.dhtml.utils.onRender;
+    var onRender = bluewave.chart.utils.onRender;
     var initChart = bluewave.chart.utils.initChart;
 
     init();

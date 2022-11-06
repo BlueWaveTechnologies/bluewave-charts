@@ -1020,8 +1020,8 @@ bluewave.charts.MapChart = function(parent, config) {
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var isArray = javaxt.dhtml.utils.isArray;
-    var onRender = javaxt.dhtml.utils.onRender;
+    var isArray = bluewave.chart.utils.isArray;
+    var onRender = bluewave.chart.utils.onRender;
     var initChart = bluewave.chart.utils.initChart;
     var createTooltip = bluewave.chart.utils.createTooltip;
 

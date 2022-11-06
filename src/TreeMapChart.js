@@ -105,7 +105,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
   /** Called whenever a label is rendered
    */
     this.getValueLabel = function(value, data){
-        value = parseFloat(value);
+        value = bluewave.chart.utils.parseFloat(value);
         if (isNaN(value)) return "";
         return round(value, 2);
     };
@@ -230,7 +230,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
       //Update value fields in the data
         data.forEach((d)=>{
             var value = d[config.value];
-            d[config.value] = parseFloat(value);
+            d[config.value] = bluewave.chart.utils.parseFloat(value);
         });
 
 
@@ -833,7 +833,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
   //** Utils
   //**************************************************************************
    var merge = javaxt.dhtml.utils.merge;
-   var onRender = javaxt.dhtml.utils.onRender;
+   var onRender = bluewave.chart.utils.onRender;
    var round = javaxt.dhtml.utils.round;
    var initChart = bluewave.chart.utils.initChart;
    var createTooltip = bluewave.chart.utils.createTooltip;

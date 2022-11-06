@@ -546,8 +546,8 @@ bluewave.charts.ScatterChart = function(parent, config) {
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var onRender = javaxt.dhtml.utils.onRender;
-    var isArray = javaxt.dhtml.utils.isArray;
+    var onRender = bluewave.chart.utils.onRender;
+    var isArray = bluewave.chart.utils.isArray;
     var initChart = bluewave.chart.utils.initChart;
     var getType = bluewave.chart.utils.getType;
     var getScale = bluewave.chart.utils.getScale;
