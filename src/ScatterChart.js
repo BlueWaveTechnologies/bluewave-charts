@@ -17,7 +17,14 @@ bluewave.charts.ScatterChart = function(parent, config) {
         pointRadius: 7,
         pointOpacity: 0.8,
         pointLabels: false,
-        showRegLine: false
+
+      /** If true, will render a regression line
+       */
+        showRegLine: false,
+
+      /** If true, will render a tooltip popup when a user hovers over a point
+       */
+        showTooltip: false
     };
     var svg, chart, plotArea, line;
     var x, y;
@@ -294,7 +301,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
         }
 
 
-        var mouseover = function(d) {
+        var mouseover = function(e, d) {
             if (tooltip){
                 var label = me.getTooltipLabel(d);
                 tooltip.html(label).show();
@@ -302,8 +309,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
             d3.select(this).transition().duration(100).attr("opacity", "0.8");
         };
 
-        var mousemove = function() {
-            var e = d3.event;
+        var mousemove = function(e) {
             if (tooltip) tooltip
             .style('top', (e.clientY) + "px")
             .style('left', (e.clientX + 20) + "px");
@@ -339,7 +345,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
               .on("mouseover", mouseover)
               .on("mousemove", mousemove)
               .on("mouseleave", mouseleave)
-              .on("click", function(d){
+              .on("click", function(e, d){
                 var datasetID = parseInt(d3.select(this).attr("dataset"));
                 me.onClick(this, datasetID, d);
               });
@@ -399,7 +405,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
                   .attr("stroke", me.getPointColor())
                   .attr("stroke-linecap", 'round')
                   .attr("stroke-width", 2)
-                  .on("click", function(d){
+                  .on("click", function(e, d){
                     var datasetID = parseInt(d3.select(this).attr("dataset"));
                     me.onClick(this, datasetID, d);
                 });
