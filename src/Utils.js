@@ -694,7 +694,7 @@ bluewave.chart.utils = {
   //** getType
   //**************************************************************************
   /** Returns the data type associated with the given value (e.g. "string",
-   *  "date", or "number").
+   *  "date", "number", or "currency").
    *  @param type Either a single object or an array of objects. In the case
    *  of an array, loops through all the entries to check whether all the
    *  entries are the same type.
@@ -702,13 +702,16 @@ bluewave.chart.utils = {
     getType: function(value) {
 
         var getType = bluewave.chart.utils.getType;
+        var isDate = bluewave.chart.utils.isDate;
+        var isNumber = bluewave.chart.utils.isNumber;
+        var isCurrency = bluewave.chart.utils.isCurrency;
         var isArray = javaxt.dhtml.utils.isArray;
-        var validNumberRegex = /^[\+\-]?\d*\.?\d+(?:[Ee][\+\-]?\d+)?$/;
 
         if (isArray(value)){
             var len = value.length;
 
             var numbers = 0;
+            var currencies = 0;
             var dates = 0;
             var strings = 0;
             var noval = 0;
@@ -726,6 +729,9 @@ bluewave.chart.utils = {
                     case "number":
                         numbers++;
                         break;
+                    case "currency":
+                        currencies++;
+                        break;
                     case "date":
                         dates++;
                         break;
@@ -738,6 +744,7 @@ bluewave.chart.utils = {
 
             if (dates===len || dates+noval===len) return "date";
             if (numbers===len || numbers+noval===len) return "number";
+            if (currencies===len || currencies+noval===len || currencies+numbers+noval===len) return "currency";
             if (strings===len) return "string";
             return null;
         }
@@ -745,11 +752,14 @@ bluewave.chart.utils = {
 
             switch (typeof value) {
                 case "string":
-                    if (value.match(validNumberRegex)){
+                    if (isNumber(value)){
                         return "number";
                     }
-                    else if (Date.parse(value)){
+                    else if (isDate(value)){
                         return "date";
+                    }
+                    else if (isCurrency(value)){ //IMPORTANT: Check after date and number!
+                        return "currency";
                     }
                     else{
                         return "string";
@@ -759,7 +769,9 @@ bluewave.chart.utils = {
                     return "number";
                     break;
                 case "object":
-                    return "date";
+                    if (isDate(value)){
+                        return "date";
+                    }
                     break;
                 default:
                     break;
@@ -768,6 +780,85 @@ bluewave.chart.utils = {
             return null;
         }
 
+    },
+
+
+  //**************************************************************************
+  //** parseFloat
+  //**************************************************************************
+  /** Returns a floating-point number for a given object. Accepts numbers or
+   *  strings representing numeric values (including currencies "R$ 2.530,55")
+   */
+    parseFloat: function(n){
+        if (typeof n === "number") return n;
+        if (typeof n === "string"){
+            if (bluewave.chart.utils.isDate(n)) return parseFloat(null);
+
+            //return parseFloat(n.replace(/[^0-9.-]+/g,""));
+
+            var dotPos = n.indexOf('.');
+            var commaPos = n.indexOf(',');
+
+            if (dotPos < 0)
+                dotPos = 0;
+
+            if (commaPos < 0)
+                commaPos = 0;
+
+            var sep;
+            if ((dotPos > commaPos) && dotPos)
+                sep = dotPos;
+            else {
+                if ((commaPos > dotPos) && commaPos)
+                    sep = commaPos;
+                else
+                    sep = false;
+            }
+
+            if (sep == false)
+                return parseFloat(n.replace(/[^\d]/g, ""));
+
+            return parseFloat(
+                n.substr(0, sep).replace(/[^\d]/g, "") + '.' +
+                n.substr(sep+1, n.length).replace(/[^0-9]/, "")
+            );
+
+        }
+        return parseFloat(n);
+    },
+
+
+  //**************************************************************************
+  //** isNumber
+  //**************************************************************************
+  /** Return true if a given object is number or can be parsed into a number
+   */
+    isNumber: function(n) {
+        if (typeof n === "number") return true;
+        if (typeof n !== "string") n = ""+n;
+        return !isNaN(parseFloat(n)) && !isNaN(n - 0);
+    },
+
+
+  //**************************************************************************
+  //** isCurrency
+  //**************************************************************************
+  /** Return true if a given object can be used to represent a currency
+   */
+    isCurrency: function(n) {
+        if (bluewave.chart.utils.isNumber(n)) return true;
+        if (typeof n !== "string") n = ""+n;
+        return bluewave.chart.utils.isNumber(n.replace(/[^0-9.-]+/g,""));
+    },
+
+
+  //**************************************************************************
+  //** isDate
+  //**************************************************************************
+  /** Return true if a given object can be parsed into a date
+   */
+    isDate: function(d) {
+        return !isNaN(Date.parse(d));
     },
 
 
