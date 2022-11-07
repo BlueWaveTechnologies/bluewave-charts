@@ -817,14 +817,42 @@ bluewave.chart.utils = {
   //** parseFloat
   //**************************************************************************
   /** Returns a floating-point number for a given object. Accepts numbers or
-   *  strings representing numeric values (including currencies "R$ 2.530,55")
+   *  strings representing numeric values (including currencies "R$ -2.530,55")
    */
     parseFloat: function(n){
         if (typeof n === "number") return n;
         if (typeof n === "string"){
             if (bluewave.chart.utils.isDate(n)) return parseFloat(null);
-
             if (bluewave.chart.utils.isCurrency(n)){
+                return bluewave.chart.utils.parseCurrency(n);
+            }
+        }
+        return parseFloat(n);
+    },
+
+
+  //**************************************************************************
+  //** parseCurrency
+  //**************************************************************************
+  /** Returns a floating-point number for a given object. Accepts numbers or
+   *  strings representing currencies values (e.g. "R$ -2.530,55", "(67.30)")
+   */
+    parseCurrency: function(n){
+
+        var words = n.split(" ");
+        for (var i=0; i<words.length; i++){
+            n = words[i].trim();
+            if (bluewave.chart.utils.isCurrency(n)){
+
+
+                var x = 1;
+                if (n.indexOf("-")==0){
+                    x=-1;
+                }
+                if (n.indexOf("(")==0 && n.lastIndexOf(")")==n.length-1){
+                    x=-1;
+                }
+
 
                 var dotPos = n.indexOf('.');
                 var commaPos = n.indexOf(',');
@@ -846,15 +874,16 @@ bluewave.chart.utils = {
                 }
 
                 if (sep == false)
-                    return parseFloat(n.replace(/[^\d]/g, ""));
+                    return parseFloat(n.replace(/[^\d]/g, ""))*x;
 
                 return parseFloat(
                     n.substr(0, sep).replace(/[^\d]/g, "") + '.' +
                     n.substr(sep+1, n.length).replace(/[^0-9]/, "")
-                );
+                )*x;
             }
         }
-        return parseFloat(n);
+
+        return parseFloat(null);
     },
 
 
@@ -889,17 +918,67 @@ bluewave.chart.utils = {
    */
     isCurrency: function(n) {
         if (bluewave.chart.utils.isNumber(n)) return true;
+        if (bluewave.chart.utils.isDate(n)) return false;
         if (typeof n !== "string") n = ""+n;
 
-        if (n.indexOf("\r")>-1 || n.indexOf("\n")>-1) return false;
-        var wordCount = 0;
-        n.split(" ").forEach((word)=>{
-            word = word.trim();
-            if (word.length>0) wordCount++;
-        });
-        if (wordCount>3) return false;
 
-        return bluewave.chart.utils.isNumber(n.replace(/[^0-9.-]+/g,""));
+
+      //Check if the string contains illegal characters by removing all numbers,
+      //letters, and currency symbols. If there's anything leftover, then we
+      //we have illegal characters in the string
+        var t = n.replace(/[-+,.a-zA-Z0-9() ]+/g, "");
+        t = t.replace(/[\$\xA2-\xA5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0-\u20BD\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6]/,"");
+        if (t.length>0) return false;
+
+
+
+
+
+      //Loop through words (e.g. "$654.29 USD" is valid)
+        var wordCount = 0;
+        var words = n.split(" ");
+        for (var i=0; i<words.length; i++){
+            var word = words[i].trim();
+            if (word.length>0){
+
+                if (word.indexOf("-")==0 || word.indexOf("+")==0){
+                    word = word.substring(1).trim();
+                }
+
+                if (word.indexOf("(")==0 && word.lastIndexOf(")")==word.length-1){
+                    word = word.substring(1,word.length-1).trim();
+                }
+
+
+                var startWithNumber = /^\d/.test(word);
+                var endsWithNumber = /[0-9]+$/.test(word);
+
+                if (startWithNumber && endsWithNumber){
+                    var t = word.replace(/[^0-9,.]+/g,"");
+                    return t===word;
+                }
+                else{
+                    if (startWithNumber || endsWithNumber){
+
+
+                      //Check if the string contains a number by stripping out
+                      //anything that's not a number, decimal, or comma. This
+                      //is a pretty weak test but works ok for most cases
+                        return bluewave.chart.utils.isNumber(n.replace(/[^0-9.-]+/g,""));
+
+                    }
+
+                }
+
+                wordCount++;
+            }
+
+            if (wordCount>3) return false;
+        }
+
+
+        return false;
+
     },
 
 
@@ -909,6 +988,15 @@ bluewave.chart.utils = {
   /** Return true if a given object can be parsed into a date
    */
     isDate: function(d) {
+
+      //Don't pass numbers to Date.parse (e.g. "3", "1.2")
+        if (typeof d === "string" || typeof d === "number"){
+            var n = (d+"").replace(/[^-+0-9,.]+/g,"");
+            if (d===n){
+                return false;
+            }
+        }
+
         return !isNaN(Date.parse(d));
     },
 
