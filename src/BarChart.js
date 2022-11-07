@@ -5,7 +5,7 @@ if(!bluewave.charts) bluewave.charts={};
 //**  BarChart
 //******************************************************************************
 /**
- *   Panel used to create bar charts
+ *   Chart used to display different categories of data using rectangular bars.
  *
  ******************************************************************************/
 
@@ -16,7 +16,8 @@ bluewave.charts.BarChart = function(parent, config) {
         layout: "vertical",
         animationSteps: 1500, //duration in milliseconds
         stackValues: false,
-        colors: d3.schemeCategory10
+        colors: d3.schemeCategory10,
+        showTooltip: false
     };
     var svg, chart, plotArea;
     var x, y;
@@ -180,37 +181,22 @@ bluewave.charts.BarChart = function(parent, config) {
 
         var mergedData = d3.merge(dataSets);
 
-        //Get max bar
-        var maxData = d3.nest()
-            .key(function (d) { return d[xKey]; })
-            .rollup(function (d) {
-                return d3.sum(d, function (g) {
-                    return parseFloat(g[yKey]);
-                });
-            }).entries(mergedData);
+        var maxData = createKeyValueDataset(mergedData, xKey, yKey);
 
 
         //To ensure max is found in line data - probably phenomenally inefficient
         if (layers.length > 0) {
 
-            let max = d3.max(maxData, d => parseFloat(d.value));
+            let max = d3.max(maxData, d => bluewave.chart.utils.parseFloat(d.value));
 
             layers.forEach(function(l){
                 let lineData = l.data;
                 let xKey = l.xAxis;
                 let yKey = l.yAxis;
-                let lineMax = d3.max(lineData, d=>parseFloat(d[yKey]));
+                let lineMax = d3.max(lineData, d=>bluewave.chart.utils.parseFloat(d[yKey]));
 
                 if (lineMax > max){
-
-                    maxData = d3.nest()
-                        .key(function (d) { return d[xKey]; })
-                        .rollup(function (d) {
-                            return d3.sum(d, function (g) {
-                                return parseFloat(g[yKey]);
-                            });
-                        }).entries(lineData);
-
+                    maxData = createKeyValueDataset(lineData, xKey, yKey);
                 }
 
             });
@@ -233,18 +219,37 @@ bluewave.charts.BarChart = function(parent, config) {
         var group = chartConfig.group;
         if(group !== null && group !== undefined && group!==""){
 
-            var groupData = d3.nest()
-            .key(function(d){return d[group];})
-            .entries(data[0]);
+
+            var groupData = [];
+            var map = d3.group(data[0], d => d[group]);
+            for (const key of map.keys()) {
+                groupData.push({
+                    key: key,
+                    values: map.get(key)
+                });
+            }
 
             if (!stackValues){
-                maxData = d3.nest()
-                .key(function (d) { return d[xKey]; })
-                .rollup(function (d) {
-                    return d3.max(d, function (g) {
-                        return parseFloat(g[yKey]);
+
+                maxData = [];
+                map = d3.rollup(mergedData,
+                    function (d) {
+                        return d3.max(d, function (g) {
+                            return bluewave.chart.utils.parseFloat(g[yKey]);
+                        });
+                    },
+                    function (d) {
+                        return d[xKey];
+                    }
+                );
+
+                for (const key of map.keys()) {
+                    maxData.push({
+                        key: key,
+                        value: map.get(key)
                     });
-                }).entries(mergedData);
+                }
+
             }
 
             let tempDataSets = [];
@@ -278,15 +283,7 @@ bluewave.charts.BarChart = function(parent, config) {
             }
 
 
-
-            var sumData = d3.nest()
-                .key(function(d){return d[xKey];})
-                .rollup(function(d){
-                    return d3.sum(d,function(g){
-                        return g[yKey];
-                    });
-            }).entries(dataSets[i]);
-
+            var sumData = createKeyValueDataset(dataSets[i], xKey, yKey);
             arr.push(sumData);
         }
 
@@ -405,7 +402,7 @@ bluewave.charts.BarChart = function(parent, config) {
                 };
 
                 let getY = function (d) {
-                    var v = parseFloat(d["value"]);
+                    var v = bluewave.chart.utils.parseFloat(d["value"]);
                     return y(v);
                 };
 
@@ -428,7 +425,7 @@ bluewave.charts.BarChart = function(parent, config) {
 
                         //Check if key exists in keyMap and accumulate value
                         if (!keyMap[key]) keyMap[key] = 0;
-                        var v = parseFloat(val);
+                        var v = bluewave.chart.utils.parseFloat(val);
                         keyMap[key] += v;
 
                         return y(keyMap[key]);
@@ -521,7 +518,7 @@ bluewave.charts.BarChart = function(parent, config) {
                 };
 
                 var getY = function(d){
-                    var v = parseFloat(d["value"]);
+                    var v = bluewave.chart.utils.parseFloat(d["value"]);
                     return y(v);
                 };
 
@@ -747,7 +744,7 @@ bluewave.charts.BarChart = function(parent, config) {
             tooltip = createTooltip();
         }
 
-        var mouseover = function(d) {
+        var mouseover = function(e, d) {
             if (tooltip){
                 let bar = d3.select(this);
                 let barID = parseInt(bar.attr("barID"));
@@ -758,8 +755,7 @@ bluewave.charts.BarChart = function(parent, config) {
             d3.select(this).transition().duration(100).attr("opacity", "0.8");
         };
 
-        var mousemove = function() {
-            var e = d3.event;
+        var mousemove = function(e) {
             if (tooltip) tooltip
             .style('top', (e.clientY) + "px")
             .style('left', (e.clientX + 20) + "px");
@@ -781,7 +777,7 @@ bluewave.charts.BarChart = function(parent, config) {
                 bars.on("mousemove", mousemove);
                 bars.on("mouseleave", mouseleave);
 
-            }, animationSteps)
+            }, animationSteps);
         };
 
 
@@ -793,13 +789,13 @@ bluewave.charts.BarChart = function(parent, config) {
             return arr;
         };
 
-        bars.on("click", function(d){
+        bars.on("click", function(e, d){
             // me.onClick(this, getSiblings(this));
             var barID = parseInt(d3.select(this).attr("barID"));
             me.onClick(this, barID, d);
         });
 
-        bars.on("dblclick", function(){
+        bars.on("dblclick", function(e, d){
             me.onDblClick(this, getSiblings(this));
         });
 
@@ -881,7 +877,7 @@ bluewave.charts.BarChart = function(parent, config) {
         };
 
         var getY = function(d){
-            var v = parseFloat(d["value"]);
+            var v = bluewave.chart.utils.parseFloat(d["value"]);
             return y(v);
         };
 
@@ -894,13 +890,7 @@ bluewave.charts.BarChart = function(parent, config) {
         };
 
 
-        var sumData = d3.nest()
-            .key(function (d) { return d[xKey]; })
-            .rollup(function (d) {
-                return d3.sum(d, function (g) {
-                    return g[yKey];
-                });
-            }).entries(layer.data);
+        var sumData = createKeyValueDataset(layer.data, xKey, yKey);
         let keyType = getType(sumData[0].key);
         if(keyType == "date") keyType = "string";
 
@@ -935,6 +925,7 @@ bluewave.charts.BarChart = function(parent, config) {
     var createTooltip = bluewave.chart.utils.createTooltip;
     var drawGridlines = bluewave.chart.utils.drawGridlines;
     var getType = bluewave.chart.utils.getType;
+    var createKeyValueDataset = bluewave.chart.utils.createKeyValueDataset;
 
 
     init();
