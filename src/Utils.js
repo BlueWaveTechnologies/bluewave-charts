@@ -1289,6 +1289,45 @@ bluewave.chart.utils = {
           a = b;
         }
         return subject.length ? subject : null;
+    },
+
+
+  //**************************************************************************
+  //** createKeyValueDataset
+  //**************************************************************************
+  /** Used to simplify a given dataset into an array key/value pairs
+   *  @param data JSON array
+   *  @param key Field name that will be used as the key
+   *  @param value Field name that will be used as the value. If the value
+   *  field is numeric, the field will be converted to a floating point value.
+   */
+    createKeyValueDataset: function(data, key, value){
+
+      //Create dataset
+        var arr = [];
+        var values = [];
+        data.forEach((d)=>{
+            var k = d[key];
+            var v = d[value];
+            arr.push({
+                key: k,
+                value: v
+            });
+            values.push(v);
+        });
+
+
+      //Convert values to numbers as needed
+        var t = bluewave.chart.utils.getType(values);
+        if (t==="number" || t==="currency"){
+            arr.forEach((d)=>{
+                var v = bluewave.chart.utils.parseFloat(d.value);
+                if (isNaN(v)) v = 0; //?
+                d.value = v;
+            });
+        }
+
+        return arr;
     }
 
 };
