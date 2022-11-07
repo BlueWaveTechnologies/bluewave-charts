@@ -127,29 +127,8 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
 
-      //Simplify data
-        var pieData = [];
-        var values = [];
-        data.forEach((d)=>{
-            var key = d[config.pieKey];
-            var val = d[config.pieValue];
-            pieData.push({
-                key: key,
-                value: val
-            });
-            values.push(val);
-        });
-
-
-      //Convert values to numbers as needed
-        var t = getType(values);
-        if (t==="number" || t==="currency"){
-            pieData.forEach((d)=>{
-                var val = bluewave.chart.utils.parseFloat(d.value);
-                if (isNaN(val)) val = 0; //?
-                d.value = val;
-            });
-        }
+      //Create data for the pie chart
+        var pieData = createKeyValueDataset(data, config.pieKey, config.pieValue);
 
 
 
@@ -657,6 +636,7 @@ bluewave.charts.PieChart = function(parent, config) {
     var initChart = bluewave.chart.utils.initChart;
     var getType = bluewave.chart.utils.getType;
     var createTooltip = bluewave.chart.utils.createTooltip;
+    var createKeyValueDataset = bluewave.chart.utils.createKeyValueDataset;
 
     init();
 };

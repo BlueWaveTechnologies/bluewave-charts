@@ -211,31 +211,7 @@ bluewave.charts.LineChart = function(parent, config) {
 
 
 
-
-          //Simplify data
-            var sumData = [];
-            var values = [];
-            layers[i].data.forEach((d)=>{
-                var key = d[xKey];
-                var val = d[yKey];
-                sumData.push({
-                    key: key,
-                    value: val
-                });
-                values.push(val);
-            });
-
-
-          //Convert values to numbers as needed
-            var t = getType(values);
-            if (t==="number" || t==="currency"){
-                sumData.forEach((d)=>{
-                    var val = bluewave.chart.utils.parseFloat(d.value);
-                    if (isNaN(val)) val = 0; //?
-                    d.value = val;
-                });
-            }
-
+            var sumData = createKeyValueDataset(layers[i].data, xKey, yKey);
 
 
           //Get lineConfig
@@ -1132,6 +1108,7 @@ bluewave.charts.LineChart = function(parent, config) {
     var getType = bluewave.chart.utils.getType;
     var drawAxes = bluewave.chart.utils.drawAxes;
     var drawGridlines = bluewave.chart.utils.drawGridlines;
+    var createKeyValueDataset = bluewave.chart.utils.createKeyValueDataset;
 
     init();
 };
