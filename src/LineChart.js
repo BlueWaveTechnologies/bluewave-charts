@@ -5,7 +5,7 @@ if(!bluewave.charts) bluewave.charts={};
 //**  LineChart
 //******************************************************************************
 /**
- *   Panel used to create line charts
+ *   Chart used to display a line (or curve) in a 2D cartesian grid.
  *
  ******************************************************************************/
 
@@ -210,13 +210,8 @@ bluewave.charts.LineChart = function(parent, config) {
             if (!xKey || !yKey) continue;
 
 
-            var sumData = d3.nest()
-                .key(function(d){return d[xKey];})
-                .rollup(function(d){
-                    return d3.sum(d,function(g){
-                        return g[yKey];
-                    });
-            }).entries(layers[i].data);
+
+            var sumData = createKeyValueDataset(layers[i].data, xKey, yKey);
 
 
           //Get lineConfig
@@ -317,9 +312,9 @@ bluewave.charts.LineChart = function(parent, config) {
                             if (nextKey>=currKey) asc++;
                             if (nextKey<=currKey) desc++;
                         }
-                        else if (xType=="number"){
-                            currKey = parseFloat(currKey);
-                            nextKey = parseFloat(nextKey);
+                        else if (xType=="number" || xType=="currency"){
+                            currKey = bluewave.chart.utils.parseFloat(currKey);
+                            nextKey = bluewave.chart.utils.parseFloat(nextKey);
                             if (nextKey>currKey) asc++;
                             if (nextKey<currKey) desc++;
                             if (nextKey==currKey) unk++;
@@ -358,10 +353,10 @@ bluewave.charts.LineChart = function(parent, config) {
                 xKeys.sort(function(a, b){
                     if (xType=='number'){
                         if (xSort=="asc"){
-                            return parseFloat(a)-parseFloat(b);
+                            return bluewave.chart.utils.parseFloat(a)-bluewave.chart.utils.parseFloat(b);
                         }
                         else{
-                            return parseFloat(b)-parseFloat(a);
+                            return bluewave.chart.utils.parseFloat(b)-bluewave.chart.utils.parseFloat(a);
                         }
                     }
                     else if (xType=='date'){
@@ -679,7 +674,7 @@ bluewave.charts.LineChart = function(parent, config) {
             };
 
             var getY = function(d){
-                var v = parseFloat(d["value"]);
+                var v = bluewave.chart.utils.parseFloat(d["value"]);
                 return (config.scaling === "logarithmic") ? y(v+1):y(v);
             };
 
@@ -766,7 +761,7 @@ bluewave.charts.LineChart = function(parent, config) {
                 .attr("stroke-width", 10)
                 .attr("opacity", 0)
                 .attr("d", getLine())
-                .on("click", function(d){
+                .on("click", function(e, d){
                     var datasetID = parseInt(d3.select(this).attr("dataset"));
                     raiseLine(chartElements[datasetID]);
                     me.onClick(this, datasetID, d);
@@ -786,7 +781,7 @@ bluewave.charts.LineChart = function(parent, config) {
                     .attr("cx", getX )
                     .attr("cy", getY )
                     .attr("r", pointRadius)
-                    .on("click", function(d){
+                    .on("click", function(e, d){
                         var datasetID = parseInt(d3.select(this).attr("dataset"));
                         raiseLine(chartElements[datasetID]);
                         me.onClick(this, datasetID, d);
@@ -814,7 +809,7 @@ bluewave.charts.LineChart = function(parent, config) {
             let circles = circleGroup.selectAll("circle");
             let fill = fillGroup.selectAll("path");
 
-            let min = d3.min(minData, d => parseFloat(d.value));
+            let min = d3.min(minData, d => bluewave.chart.utils.parseFloat(d.value));
             let scaleY = config.scaling === "logarithmic" ? y(min) : y(0);
 
             //playing with rendering lines one at a time
@@ -937,7 +932,7 @@ bluewave.charts.LineChart = function(parent, config) {
             .attr("points", vertices.join(" "))
             .attr("transform", "translate("+ (tx+(a)) +","+ (ty-(a)) +")")
             .style("fill", color)
-            .on("click", function(d){
+            .on("click", function(e, d){
                 line.dispatch('click');
             });
 
@@ -948,7 +943,7 @@ bluewave.charts.LineChart = function(parent, config) {
             .attr("text-anchor", "start")
             .style("fill", "#fff")
             .text(label)
-            .on("click", function(d){
+            .on("click", function(e, d){
                 line.dispatch('click');
             });
 
@@ -1107,12 +1102,13 @@ bluewave.charts.LineChart = function(parent, config) {
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var onRender = javaxt.dhtml.utils.onRender;
+    var onRender = bluewave.chart.utils.onRender;
 
     var initChart = bluewave.chart.utils.initChart;
     var getType = bluewave.chart.utils.getType;
     var drawAxes = bluewave.chart.utils.drawAxes;
     var drawGridlines = bluewave.chart.utils.drawGridlines;
+    var createKeyValueDataset = bluewave.chart.utils.createKeyValueDataset;
 
     init();
 };

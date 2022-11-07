@@ -49,7 +49,7 @@ bluewave.charts.MapChart = function(parent, config) {
             var projection = me.getProjection();
             if (!projection) return;
 
-            var point = d3.mouse(this);
+            var point = d3.pointer(e);
             var coord = projection.invert(point);
             me.onMouseClick(coord[1], coord[0], e);
         });
@@ -409,20 +409,20 @@ bluewave.charts.MapChart = function(parent, config) {
   //**************************************************************************
   /** Used to recenter the map using d3 mouse events
    */
-    var recenter = function(){
+    var recenter = function(e){
 
         var projection = me.getProjection();
         if (!projection || panningDisabled) return;
 
 
-        //mapArea.attr('transform', d3.event.transform); //<--not what we want
+        //mapArea.attr('transform', e.transform); //<--not what we want
 
 
       //Get center point of the map
         var rect = javaxt.dhtml.utils.getRect(svg.node());
         var w = rect.width;
         var h = rect.height;
-        var t = d3.event.transform;
+        var t = e.transform;
         var x = (w/2)-t.x;
         var y = (h/2)-t.y;
         var p = projection.invert([x,y]);
@@ -711,9 +711,8 @@ bluewave.charts.MapChart = function(parent, config) {
         .attr("stroke", outlineColor)
         .attr("stroke-width", outlineWidth)
         .attr("stroke-opacity", opacity)
-        .on("click", function(feature, idx, siblings){
+        .on("click", function(e, feature, idx, siblings){
             if (config.onClick){
-                var e = d3.event;
                 config.onClick.apply(me, [{
                     feature: feature,
                     element: siblings[idx],
@@ -853,7 +852,7 @@ bluewave.charts.MapChart = function(parent, config) {
         if (tooltip || config.onClick) highlight = true;
 
 
-        var mouseover = function(feature, idx, siblings) {
+        var mouseover = function(e, feature) {
 
             if (tooltip){
                 var label = getTooltipLabel(feature);
@@ -873,15 +872,13 @@ bluewave.charts.MapChart = function(parent, config) {
             }]);
         };
 
-        var mousemove = function() {
-            var e = d3.event;
-
+        var mousemove = function(e) {
             if (tooltip) tooltip
             .style('top', (e.clientY) + "px")
             .style('left', (e.clientX + 20) + "px");
         };
 
-        var mouseleave = function(feature, idx, siblings) {
+        var mouseleave = function(e, feature) {
             if (tooltip) tooltip
             .style("opacity", 0)
             .style("display", "none");
@@ -922,9 +919,8 @@ bluewave.charts.MapChart = function(parent, config) {
         .on("mouseover", mouseover)
         .on("mousemove", mousemove)
         .on("mouseleave", mouseleave)
-        .on("click", function(feature, idx, siblings){
+        .on("click", function(e, feature, idx, siblings){
             if (config.onClick){
-                var e = d3.event;
                 config.onClick.apply(me, [{
                     feature: feature,
                     element: siblings[idx],
@@ -1024,8 +1020,8 @@ bluewave.charts.MapChart = function(parent, config) {
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var isArray = javaxt.dhtml.utils.isArray;
-    var onRender = javaxt.dhtml.utils.onRender;
+    var isArray = bluewave.chart.utils.isArray;
+    var onRender = bluewave.chart.utils.onRender;
     var initChart = bluewave.chart.utils.initChart;
     var createTooltip = bluewave.chart.utils.createTooltip;
 

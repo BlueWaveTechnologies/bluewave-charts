@@ -5,7 +5,7 @@ if(!bluewave.charts) bluewave.charts={};
 //**  CalendarChart
 //******************************************************************************
 /**
- *   Panel used to create calendar charts
+ *   Chart used to render days in a year and an associated value.
  *
  ******************************************************************************/
 
@@ -139,7 +139,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
             var date = d[config.date];
             var value = d[config.value];
             d[config.date] = new Date(date);
-            d[config.value] = parseFloat(value);
+            d[config.value] = bluewave.chart.utils.parseFloat(value);
         });
 
 
@@ -204,16 +204,16 @@ bluewave.charts.CalendarChart = function(parent, config) {
         }
 
 
-        var mouseover = function(d, i) {
+        var mouseover = function(e, d) {
             if (tooltip){
+                var i = cells.nodes().indexOf(this);
                 var label = me.getTooltipLabel({date: d, value: values[i]});
                 tooltip.html(label).show();
             }
             d3.select(this).transition().duration(100).attr("opacity", "0.8");
         };
 
-        var mousemove = function() {
-            var e = d3.event;
+        var mousemove = function(e) {
             if (tooltip) tooltip
             .style('top', (e.clientY) + "px")
             .style('left', (e.clientX + 20) + "px");
@@ -292,7 +292,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
 
 
       //Create table and cells
-        yearGroup.append("g")
+        var cells = yearGroup.append("g")
           .selectAll("*")
           .data(function(year){
               var arr = [];
@@ -317,7 +317,8 @@ bluewave.charts.CalendarChart = function(parent, config) {
         .on("mouseover", mouseover)
         .on("mousemove", mousemove)
         .on("mouseleave", mouseleave)
-        .on("click", function(d, i){
+        .on("click", function(e, d){
+            var i = cells.nodes().indexOf(this);
             me.onClick(this, {date: d, value: values[i]});
         });
 
@@ -399,7 +400,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
    //** Utils
    //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var onRender = javaxt.dhtml.utils.onRender;
+    var onRender = bluewave.chart.utils.onRender;
     var initChart = bluewave.chart.utils.initChart;
     var createTooltip = bluewave.chart.utils.createTooltip;
     var getColorRange = bluewave.chart.utils.getColorRange;
