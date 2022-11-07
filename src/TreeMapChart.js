@@ -85,7 +85,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
         if (d.group){
             if (d.group.length>0) label += " (" + d.group + ")";
         }
-        return label + "<br/>" + d.value;
+        return label + "<br/>" + me.getValueLabel(d.value);
     };
 
 
@@ -105,9 +105,9 @@ bluewave.charts.TreeMapChart = function(parent, config) {
   /** Called whenever a label is rendered
    */
     this.getValueLabel = function(value, data){
-        value = bluewave.chart.utils.parseFloat(value);
-        if (isNaN(value)) return "";
-        return round(value, 2);
+        var val = bluewave.chart.utils.parseFloat(value);
+        if (isNaN(val)) return value;
+        return round(val, 2);
     };
 
 
@@ -176,6 +176,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
    * the object matching the value (parameter: value) of key (parameter: key)
    */
     var getNestedObject = (object, key, value) => {
+        if (!object) return null;
         if (Array.isArray(object)) {
           for (const obj of object) {
             const result = getNestedObject(obj, key, value);
@@ -301,7 +302,8 @@ bluewave.charts.TreeMapChart = function(parent, config) {
             root: root,
             leaves: leaves,
             descendants: descendants,
-            groupNames: groupNames
+            groupNames: groupNames,
+            children: dataHierarchy["children"]
         };
     };
 
