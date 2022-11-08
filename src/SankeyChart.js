@@ -193,6 +193,16 @@ bluewave.charts.SankeyChart = function(parent, config) {
         var formatNumber = d3.format(",.0f"); // zero decimal places
 
 
+        var getLinkColor = function(d, opacity){
+            var linkColor;
+            if (config.links.color==="source"){
+                linkColor = d.source.color;
+            }
+            else{
+                linkColor = config.links.color;
+            }
+            return chroma.mix(linkColor, "white", 1-opacity).css();
+        };
 
 
 
@@ -208,20 +218,16 @@ bluewave.charts.SankeyChart = function(parent, config) {
           .attr("class", "sankey-link")
           .attr("d", d3.sankeyLinkHorizontal())
           .attr("stroke-width", function (d) {
-            return Math.max(d.width, 1);
+                return Math.max(d.width, 1);
           })
-          .style("stroke-opacity", function (d) {
-            return (d.opacity=config.links.opacity);
+          .on('mouseover', function(e, d){
+                var opacity = Math.min(1, config.links.opacity*1.3);
+                var linkColor = getLinkColor(d, opacity);
+                d3.select(this).style("stroke", linkColor);
           })
-          .style("stroke", function (d) {
-              return config.links.color;
-          })
-          .on('mouseover', function(d){
-              var opacity = Math.min(1, config.links.opacity*1.3);
-              d3.select(this).style("stroke-opacity", opacity);
-          })
-          .on('mouseout', function(d){
-            d3.select(this).style("stroke-opacity", d.opacity);
+          .on('mouseout', function(e, d){
+                var linkColor = getLinkColor(d, config.links.opacity);
+                d3.select(this).style("stroke", linkColor);
           });
 
 
@@ -265,14 +271,12 @@ bluewave.charts.SankeyChart = function(parent, config) {
 
 
       //Update link color AFTER node color is set
-        if (config.links.color==="source"){
-            link.each(function() {
-                var path = d3.select(this);
-                path.style("stroke", function (d) {
-                    return d.source.color;
-                });
+        link.each(function() {
+            var path = d3.select(this);
+            path.style("stroke", function (d) {
+                return getLinkColor(d, config.links.opacity);
             });
-        }
+        });
 
 
 
