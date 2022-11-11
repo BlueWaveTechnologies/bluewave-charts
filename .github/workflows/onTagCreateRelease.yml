@@ -1,0 +1,84 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+    - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
+
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+
+      - name: Create release name using the tag name
+        run: |
+             githubRef=${{ github.ref }}
+             githubRef="${githubRef/'refs/tags'/''}"
+             githubRef="${githubRef/'/'/''}"
+             githubRef="${githubRef/'v'/''}"
+             echo "releaseLabel=$githubRef" >> $GITHUB_ENV
+             
+             
+      - name: Read exported variable (test to verify the releaseLabel variable is global)
+        run: |
+          echo $releaseLabel          
+
+
+      - name: Create temp directory
+        run: mkdir temp
+
+
+      - name: Create release directory
+        run: mkdir release
+
+
+      - name: Combine javascript files into a single file 
+        run: find ./src -name '*.js' -exec cat {} \; > ./temp/bluewave-charts.js
+
+
+      - name: Minify the combined file
+        uses: nizarmah/auto-minify@v2.1
+        with:
+          directory: ./temp
+          output: ./release
+          overwrite: true
+
+
+      - name: Copy release assets to the release directory
+        run: cp -r src demos LICENSE release
+
+
+      - name: Zip configured project directory into downloadable release.zip file
+        run: cd release; zip -r ../bluewave-charts-${{ env.releaseLabel }}.zip *
+
+               
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+        with:
+          tag_name: ${{ env.releaseLabel }}
+          release_name: Release ${{ env.releaseLabel }}
+          body: |
+            BlueWave Explorer ${{ env.releaseLabel }}
+          draft: false
+          prerelease: false
+
+
+      - name: Upload packaged project to Github Release page
+        id: upload-release-asset-minified
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: bluewave-charts-${{ env.releaseLabel }}.zip
+          asset_name: bluewave-charts-${{ env.releaseLabel }}.zip
+          asset_content_type: application/zip
