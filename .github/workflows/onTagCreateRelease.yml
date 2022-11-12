@@ -51,7 +51,7 @@ jobs:
 
 
       - name: Prepend release info to minified file
-        run: printf '%s\n%s\n' "//Bluewave Charts ${{ env.releaseLabel }}" "$(cat ./release/bluewave-charts.js)" >./release/bluewave-charts.js
+        run: printf '%s\n%s\n' "//Bluewave Charts ${{ env.releaseLabel }}" "$(cat release/bluewave-charts.js)" >release/bluewave-charts.js
 
 
       - name: Copy release assets to the release directory
