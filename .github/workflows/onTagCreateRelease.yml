@@ -50,8 +50,16 @@ jobs:
           overwrite: true
 
 
+      - name: Prepend release info to minified file
+        run: printf '%s\n%s\n' "//Bluewave Charts ${{ env.releaseLabel }}" "$(cat ./release/bluewave-charts.js)" >./release/bluewave-charts.js
+
+
       - name: Copy release assets to the release directory
         run: cp -r src demos LICENSE release
+
+
+      - name: Copy release assets to the release directory
+        run: cp LICENSE release/LICENSE.TXT
 
 
       - name: Zip configured project directory into downloadable release.zip file
