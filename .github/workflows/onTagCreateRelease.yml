@@ -26,6 +26,10 @@ jobs:
              echo $releaseLabel               
 
 
+      - name: Print release label
+        run: echo $releaseLabel 
+
+
       - name: Create temp directory
         run: mkdir temp
 
@@ -53,7 +57,7 @@ jobs:
 
 
       - name: Copy release assets to the release directory
-        run: cp -r src demos LICENSE release
+        run: cp -r src demos release
 
 
       - name: Copy release assets to the release directory
