@@ -22,8 +22,7 @@ jobs:
              githubRef="${githubRef/'refs/tags'/''}"
              githubRef="${githubRef/'/'/''}"
              githubRef="${githubRef/'v'/''}"
-             echo "releaseLabel=$githubRef" >> $GITHUB_ENV
-             echo $releaseLabel               
+             echo "releaseLabel=$githubRef" >> $GITHUB_ENV             
 
 
       - name: Print release label
@@ -60,12 +59,12 @@ jobs:
         run: cp -r src demos release
 
 
-      - name: Copy release assets to the release directory
+      - name: Copy license to the release directory
         run: cp LICENSE release/LICENSE.TXT
 
 
-      - name: Zip configured project directory into downloadable release.zip file
-        run: cd release; zip -r ../bluewave-charts-${{ env.releaseLabel }}.zip *
+      - name: Create zip file
+        run: cd release; zip -r ../bluewave-charts_v${{ env.releaseLabel }}.zip *
 
                
       - name: Create Release
@@ -74,10 +73,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
         with:
-          tag_name: ${{ env.releaseLabel }}
+          tag_name: v${{ env.releaseLabel }}
           release_name: Release ${{ env.releaseLabel }}
           body: |
-            BlueWave Explorer ${{ env.releaseLabel }}
+            BlueWave Charts ${{ env.releaseLabel }}
           draft: false
           prerelease: false
 
@@ -89,6 +88,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: bluewave-charts-${{ env.releaseLabel }}.zip
-          asset_name: bluewave-charts-${{ env.releaseLabel }}.zip
+          asset_path: bluewave-charts_v${{ env.releaseLabel }}.zip
+          asset_name: bluewave-charts_v${{ env.releaseLabel }}.zip
           asset_content_type: application/zip
