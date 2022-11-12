@@ -1,4 +1,4 @@
-# bluewave-charts
+# Introduction
 
 Library used to create charts and graphs using D3
 
@@ -35,10 +35,6 @@ The chart classes all have a very similar constructor used to instantiate the cl
         }
     ]);    
 ```
-
-## Releases
-
-This library is under active development. Releases are created automatically whenever code is committed to master.
 
 ## License
 
