@@ -23,11 +23,7 @@ jobs:
              githubRef="${githubRef/'/'/''}"
              githubRef="${githubRef/'v'/''}"
              echo "releaseLabel=$githubRef" >> $GITHUB_ENV
-             
-             
-      - name: Read exported variable (test to verify the releaseLabel variable is global)
-        run: |
-          echo $releaseLabel          
+             echo $releaseLabel               
 
 
       - name: Create temp directory
@@ -51,7 +47,9 @@ jobs:
 
 
       - name: Prepend release info to minified file
-        run: printf '%s\n%s\n' "//Bluewave Charts ${{ env.releaseLabel }}" "$(cat release/bluewave-charts.js)" >release/bluewave-charts.js
+        run: |
+             sudo chmod 777 ./release/bluewave-charts.js
+             printf '%s\n%s\n' "//Bluewave Charts ${{ env.releaseLabel }}" "$(cat ./release/bluewave-charts.js)" >./release/bluewave-charts.js
 
 
       - name: Copy release assets to the release directory
