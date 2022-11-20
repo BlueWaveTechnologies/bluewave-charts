@@ -351,7 +351,7 @@ bluewave.charts.LineChart = function(parent, config) {
           //Sort xKeys
             if (xSort){
                 xKeys.sort(function(a, b){
-                    if (xType=='number'){
+                    if (xType=="number" || xType=="currency"){
                         if (xSort=="asc"){
                             return bluewave.chart.utils.parseFloat(a)-bluewave.chart.utils.parseFloat(b);
                         }
