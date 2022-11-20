@@ -1398,7 +1398,7 @@ bluewave.chart.utils = {
             var k = d[key];
             var v = d[value];
             arr.push({
-                key: k,
+                key: k+"",
                 value: v
             });
             values.push(v);
