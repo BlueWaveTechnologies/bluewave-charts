@@ -167,40 +167,6 @@ bluewave.charts.PieChart = function(parent, config) {
         var pieData = createKeyValueDataset(data, config.pieKey, config.pieValue);
 
 
-
-      //Combine duplicate keys
-        var values = [];
-        pieData.forEach((d)=> values.push(d.value));
-        var t = getType(values);
-        if (t==="number" || t==="currency"){
-
-            var temp = {};
-            pieData.forEach((d)=>{
-                var v = bluewave.chart.utils.parseFloat(d.value);
-                if (isNaN(v)) v = 0;
-
-                if (temp.hasOwnProperty(d.key)){
-                    temp[d.key] += v;
-                }
-                else{
-                    temp[d.key] = v;
-                }
-            });
-
-            pieData = [];
-            for (var key in temp) {
-                if (temp.hasOwnProperty(key)){
-                    var val = temp[key];
-                    pieData.push({
-                        key: key,
-                        value: val
-                    });
-                }
-            }
-        }
-
-
-
       //Sort values as needed
         var pieSort = (config.pieSort+"").toLowerCase();
         var sortDir = (config.pieSortDir+"").toLowerCase();
