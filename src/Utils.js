@@ -154,22 +154,53 @@ bluewave.chart.utils = {
         var getDateFormat = bluewave.chart.utils.getDateFormat;
 
 
-        var xAxis, yAxis, xBand, yBand, x, y;
-        var sb;
+      //Get x/y key types
+        var xKeys = [];
+        var yKeys = [];
+        chartData.forEach((d)=>{
+            xKeys.push(d[xKey]);
+            yKeys.push(d[yKey]);
+        });
 
-        let xType = getType(chartData[0][xKey]);
-        if (chartType=="barChart" && xType == "date") xType = "string";
+        var xType = getType(xKeys);
+        var yType = getType(yKeys);
 
-        sb = getScale(xKey,xType,[0,axisWidth],chartData,minData,null,chartConfig.xMin,chartConfig.xMax);
-        x = sb.scale;
-        xBand = sb.band;
 
-        let yType = getType(chartData[0][yKey]);
-        if (chartType=="barChart" && yType == "date") yType = "string";
+
+      //Special case for bar charts
+        if (chartType=="barChart"){
+            if (xType == "date") xType = "string";
+            if (yType == "date") yType = "string";
+
+            if (xType=="number" || xType=="currency"){
+
+              //Set xMin value
+                var layout = chartConfig.layout;
+                if (layout==="vertical"){
+                    var minX = Number.MAX_VALUE;
+                    var maxX = 0;
+                    xKeys.forEach((key)=>{
+                        var n = bluewave.chart.utils.parseFloat(key);
+                        minX = Math.min(n, minX);
+                        maxX = Math.max(n, maxX);
+                    });
+                    chartConfig.xMin = minX;
+                }
+            }
+        }
+
+
+
+
+        var sb = getScale(xKey,xType,[0,axisWidth],chartData,minData,null,chartConfig.xMin,chartConfig.xMax);
+        var x = sb.scale;
+        var xBand = sb.band;
+
+
         var scaleOption = chartConfig.scaling==="logarithmic" ? "logarithmic" : "linear";
         sb = getScale(yKey,yType,[axisHeight,0],chartData,minData,scaleOption);
-        y = sb.scale;
-        yBand = sb.band;
+        var y = sb.scale;
+        var yBand = sb.band;
 
 
 
@@ -218,7 +249,7 @@ bluewave.chart.utils = {
                     if (isNaN(numWholeNumbers)){
                         numWholeNumbers = 0;
                         nodeList.forEach(function(n){
-                            var wholeNumber = parseFloat(n.textContent) % 1 == 0;
+                            var wholeNumber = bluewave.chart.utils.parseFloat(n.textContent) % 1 == 0;
                             if (wholeNumber) numWholeNumbers++;
                         });
                     }
@@ -323,7 +354,7 @@ bluewave.chart.utils = {
         if (!(chartConfig.xTicks===true || chartConfig.xTicks===false)){
             xTicks = chartConfig.xTicks;
         }
-        xAxis = plotArea
+        var xAxis = plotArea
             .append("g")
             .attr("transform", "translate(0," + axisHeight + ")");
 
@@ -369,7 +400,7 @@ bluewave.chart.utils = {
 
       //Render y-axis
         var yFormat = getTickFormat(yType, chartConfig.yFormat);
-        yAxis = plotArea
+        var yAxis = plotArea
             .append("g");
 
         if (chartConfig.yTicks===false){
@@ -567,13 +598,13 @@ bluewave.chart.utils = {
 
                 var minVal, maxVal;
                 if (!minData){
-                    var extent = d3.extent(chartData, function(d) { return parseFloat(d[key]); });
+                    var extent = d3.extent(chartData, function(d) { return bluewave.chart.utils.parseFloat(d[key]); });
                     minVal = 0;
                     maxVal = extent[1];
                 }
                 else{
-                    minVal = d3.min(minData, function(d) { return parseFloat(d[key]);} );
-                    maxVal = d3.max(chartData, function(d) { return parseFloat(d[key]);} );
+                    minVal = d3.min(minData, function(d) { return bluewave.chart.utils.parseFloat(d[key]);} );
+                    maxVal = d3.max(chartData, function(d) { return bluewave.chart.utils.parseFloat(d[key]);} );
                 }
                 if (minVal === maxVal) maxVal = minVal + 1;
 
@@ -1413,6 +1444,33 @@ bluewave.chart.utils = {
                 if (isNaN(v)) v = 0; //?
                 d.value = v;
             });
+
+
+          //Combine duplicate keys
+            var temp = {};
+            arr.forEach((d, idx)=>{
+                var v = arr[idx].value;
+
+                if (temp.hasOwnProperty(d.key)){
+                    temp[d.key] += v;
+                }
+                else{
+                    temp[d.key] = v;
+                }
+            });
+
+            arr = [];
+            for (var key in temp) {
+                if (temp.hasOwnProperty(key)){
+                    var val = temp[key];
+                    arr.push({
+                        key: key,
+                        value: val
+                    });
+                }
+            }
+
+
         }
 
         return arr;
