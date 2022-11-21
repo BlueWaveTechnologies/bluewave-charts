@@ -43,6 +43,7 @@ bluewave.charts.PieChart = function(parent, config) {
         animationSteps: 1500
     };
     var svg, pieArea;
+    var numSlices;
 
 
   //**************************************************************************
@@ -71,8 +72,42 @@ bluewave.charts.PieChart = function(parent, config) {
   //**************************************************************************
   //** getTooltipLabel
   //**************************************************************************
-    this.getTooltipLabel = function(d){
-        return d.key + "<br/>" + d.value;
+  /** Called whenever a tooltip is rendered. Override as needed.
+   */
+    this.getTooltipLabel = function(d, i){
+        return me.getKeyLabel(d.key, d) + "<br/>" + me.getValueLabel(d.value);
+    };
+
+
+  //**************************************************************************
+  //** getKeyLabel
+  //**************************************************************************
+  /** Called whenever a label is rendered
+   */
+    this.getKeyLabel = function(key, data){
+        return key;
+    };
+
+
+  //**************************************************************************
+  //** getValueLabel
+  //**************************************************************************
+  /** Called whenever a label is rendered
+   */
+    this.getValueLabel = function(value, data){
+        var val = bluewave.chart.utils.parseFloat(value);
+        if (isNaN(val)) return value;
+        return round(val, 2);
+    };
+
+
+  //**************************************************************************
+  //** getNumSlices
+  //**************************************************************************
+  /** Returns the total number of slices in the pie chart
+   */
+    this.getNumSlices = function(){
+        return numSlices;
     };
 
 
@@ -81,6 +116,7 @@ bluewave.charts.PieChart = function(parent, config) {
   //**************************************************************************
     this.clear = function(){
         clearChart();
+        numSlices = 0;
     };
 
 
@@ -132,6 +168,39 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
 
+      //Combine duplicate keys
+        var values = [];
+        pieData.forEach((d)=> values.push(d.value));
+        var t = getType(values);
+        if (t==="number" || t==="currency"){
+
+            var temp = {};
+            pieData.forEach((d)=>{
+                var v = bluewave.chart.utils.parseFloat(d.value);
+                if (isNaN(v)) v = 0;
+
+                if (temp.hasOwnProperty(d.key)){
+                    temp[d.key] += v;
+                }
+                else{
+                    temp[d.key] = v;
+                }
+            });
+
+            pieData = [];
+            for (var key in temp) {
+                if (temp.hasOwnProperty(key)){
+                    var val = temp[key];
+                    pieData.push({
+                        key: key,
+                        value: val
+                    });
+                }
+            }
+        }
+
+
+
       //Sort values as needed
         var pieSort = (config.pieSort+"").toLowerCase();
         var sortDir = (config.pieSortDir+"").toLowerCase();
@@ -153,7 +222,7 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
       //Truncate data as needed
-        var numSlices = pieData.length;
+        numSlices = pieData.length;
         var hasOther = false;
         if (!isNaN(maxSlices) && maxSlices>0) {
             if (maxSlices<numSlices){
@@ -180,7 +249,7 @@ bluewave.charts.PieChart = function(parent, config) {
                     hasOther = true;
                 }
 
-                numSlices = data.length;
+                numSlices = pieData.length;
             }
         }
 
@@ -262,11 +331,23 @@ bluewave.charts.PieChart = function(parent, config) {
         var borderColor = config.borderColor;
 
 
-      //Create function to create fill colors
+      //Create function to set fill colors
         var getColor;
         if (colorScaling==="linear"){
-            var maxColors = numSlices-(hasOther?2:1);
-            getColor = d3.scaleLinear().domain([0,maxColors]).range(colors);
+            var colorRange = chroma.scale(colors);
+
+            var arr;
+            if (hasOther){
+                arr = colorRange.colors(numSlices-1);
+                arr.push(otherColor);
+            }
+            else{
+                arr = colorRange.colors(numSlices);
+            }
+
+            getColor = function(i){
+                return arr[i];
+            };
         }
         else if (colorScaling==="ordinal"){
             getColor = d3.scaleOrdinal(colors);
@@ -286,9 +367,6 @@ bluewave.charts.PieChart = function(parent, config) {
         .append("path")
         .attr("d", arc)
         .attr("fill", function (d,i) {
-            if (hasOther && i==numSlices-1){
-                return otherColor;
-            }
             return getColor(i);
         })
         .attr("stroke", borderColor)
@@ -410,7 +488,7 @@ bluewave.charts.PieChart = function(parent, config) {
             .enter()
             .append("text")
             .text(function(d) {
-                return d.data.key;
+                return me.getKeyLabel(d.data.key, d.data);
             })
             .attr("transform", function (d, i) {
                 return "translate(" + endPoints[i] + ")";
@@ -637,6 +715,7 @@ bluewave.charts.PieChart = function(parent, config) {
     var getType = bluewave.chart.utils.getType;
     var createTooltip = bluewave.chart.utils.createTooltip;
     var createKeyValueDataset = bluewave.chart.utils.createKeyValueDataset;
+    var round = javaxt.dhtml.utils.round;
 
     init();
 };
