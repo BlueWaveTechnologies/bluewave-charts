@@ -67,8 +67,70 @@ bluewave.charts.BarChart = function(parent, config) {
   //**************************************************************************
   //** getTooltipLabel
   //**************************************************************************
-    this.getTooltipLabel = function(d, i, arr){
-        return d.key + "<br/>" + d.value;
+  /** Called whenever a tooltip is rendered. Override as needed.
+   */
+    this.getTooltipLabel = function(d, i, data){
+
+        var label = me.getKeyLabel(d.key, d) + "<br/>" + me.getValueLabel(d.value);
+        var group = config.group;
+        if (group){
+            group = (group+"").trim();
+            if (group.length>0){
+                try{
+                    label = group + ": " + data[0][config.group] + "<br/>" + label;
+                }
+                catch(e){}
+            }
+        }
+
+        return label;
+    };
+
+
+  //**************************************************************************
+  //** getKeyLabel
+  //**************************************************************************
+  /** Called whenever a label is rendered
+   */
+    this.getKeyLabel = function(key, data){
+        var xKey, yKey;
+        var layout = config.layout;
+        if (layout === "horizontal") {
+            yKey = config.xAxis;
+            xKey = config.yAxis;
+        }
+        else{
+            xKey = config.xAxis;
+            yKey = config.yAxis;
+        }
+
+        return xKey + ": " + key;
+    };
+
+
+  //**************************************************************************
+  //** getValueLabel
+  //**************************************************************************
+  /** Called whenever a label is rendered
+   */
+    this.getValueLabel = function(value, data){
+
+        var xKey, yKey;
+        var layout = config.layout;
+        if (layout === "horizontal") {
+            yKey = config.xAxis;
+            xKey = config.yAxis;
+        }
+        else{
+            xKey = config.xAxis;
+            yKey = config.yAxis;
+        }
+
+        var val = bluewave.chart.utils.parseFloat(value);
+        if (!isNaN(val)) value = round(val, 2);
+
+        return yKey + ": " + value;
+
     };
 
 
@@ -215,49 +277,55 @@ bluewave.charts.BarChart = function(parent, config) {
         };
 
 
-        //Reformat data if "group by" is selected
+
         var group = chartConfig.group;
-        if(group !== null && group !== undefined && group!==""){
+        if (group){
+            group = (group+"").trim();
+            if (group.length===0) group = null;
+        }
 
 
-            var groupData = [];
-            var map = d3.group(data[0], d => d[group]);
-            for (const key of map.keys()) {
-                groupData.push({
-                    key: key,
-                    values: map.get(key)
-                });
-            }
 
-            if (!stackValues){
+      //Reformat data if "group by" is selected
+        if (group){
 
-                maxData = [];
-                map = d3.rollup(mergedData,
-                    function (d) {
-                        return d3.max(d, function (g) {
-                            return bluewave.chart.utils.parseFloat(g[yKey]);
-                        });
-                    },
-                    function (d) {
-                        return d[xKey];
+            dataSets = [];
+            var map = d3.group(mergedData, d => d[group]);
+            for (var key of map.keys()) {
+
+                var arr = map.get(key);
+                var groupName = arr[0][group];
+
+
+                var temp = {};
+                arr.forEach((d)=>{
+                    var key = d[xKey];
+                    var val = bluewave.chart.utils.parseFloat(d[yKey]);
+                    if (isNaN(val)) val = 0;
+
+                    if (temp.hasOwnProperty(key)){
+                        temp[key] += val;
                     }
-                );
+                    else{
+                        temp[key] = val;
+                    }
+                });
 
-                for (const key of map.keys()) {
-                    maxData.push({
-                        key: key,
-                        value: map.get(key)
-                    });
+
+                arr = [];
+                for (var key in temp) {
+                    if (temp.hasOwnProperty(key)){
+                        var val = temp[key];
+                        var entry = {};
+                        entry[group] = groupName;
+                        entry[xKey] = key;
+                        entry[yKey] = val;
+                        arr.push(entry);
+                    }
                 }
 
-            }
-
-            let tempDataSets = [];
-            groupData.forEach(function(g){
-                tempDataSets.push(g.values);
-            });
-
-            dataSets = tempDataSets;
+                dataSets.push(arr);
+            };
 
         }
         else{
@@ -269,6 +337,8 @@ bluewave.charts.BarChart = function(parent, config) {
       //Get x and y values for each data set and format object for rendering
         var arr = [];
         for (let i=0; i<dataSets.length; i++){
+
+            var n = i>0 ? (i+1) : "";
 
             let xAxisN = chartConfig[`xAxis${i+1}`];
             let yAxisN = chartConfig[`yAxis${i+1}`];
@@ -286,6 +356,21 @@ bluewave.charts.BarChart = function(parent, config) {
             var sumData = createKeyValueDataset(dataSets[i], xKey, yKey);
             arr.push(sumData);
         }
+
+
+
+      //Create new maxData for axis rendering
+        if (stackValues){
+            maxData = createKeyValueDataset(d3.merge(arr), "key", "value");
+        }
+        else{
+            maxData = [];
+            arr.forEach((sumData)=>{
+                maxData.push(...sumData);
+            });
+        }
+
+
 
 
         //Flip axes if layout is horizontal
@@ -605,21 +690,32 @@ bluewave.charts.BarChart = function(parent, config) {
 
                     if (chartConfig.layout === "vertical") {
 
-                        if(!group){
                         plotArea
                             .selectAll("mybar")
                             .data(sumData)
                             .enter()
                             .append("rect")
                             .attr("x", function (d) {
-                                return getX(d) - width/sumData.length / 2;
+                                var xStart = getX(d) - width/sumData.length / 2;
+                                if (group){
+                                    var maxWidth = width/sumData.length;
+                                    var barWidth = maxWidth/dataSets.length;
+                                    xStart += (barWidth*i);
+                                }
+                                return xStart;
                             })
                             .attr("y", getY)
                             .attr("height", function (d) {
                                 return height - getY(d);
                             })
                             .attr("width", function (d) {
-                                return width/sumData.length-5;
+                                var maxWidth = width/sumData.length;
+                                if (group){
+                                    return (maxWidth/dataSets.length);
+                                }
+                                else{
+                                    return maxWidth - 5;
+                                }
                             })
                             .attr("opacity", fillOpacity)
                             .attr("barID", function(d, n, j){
@@ -628,7 +724,6 @@ bluewave.charts.BarChart = function(parent, config) {
                                 return group ? i : 0;
                             });
 
-                        }
 
                     }
 
@@ -926,7 +1021,7 @@ bluewave.charts.BarChart = function(parent, config) {
     var drawGridlines = bluewave.chart.utils.drawGridlines;
     var getType = bluewave.chart.utils.getType;
     var createKeyValueDataset = bluewave.chart.utils.createKeyValueDataset;
-
+    var round = javaxt.dhtml.utils.round;
 
     init();
 };
