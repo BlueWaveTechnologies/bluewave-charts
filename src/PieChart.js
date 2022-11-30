@@ -38,7 +38,6 @@ bluewave.charts.PieChart = function(parent, config) {
         borderColor: "#777",
         extendLines: false,
         colors: ["#6699cc","#f8f8f8"], //start->end
-        colorScaling: "linear",
         otherColor: "#b8b8b8",
         animationSteps: 1500
     };
@@ -287,37 +286,18 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
 
-      //Get color config
-        var colors = config.colors;
-        if (!colors) colors = ["#6699cc","#f8f8f8"];
-        var colorScaling = config.colorScaling;
-        if (!colorScaling) colorScaling = "linear";
-        var otherColor = config.otherColor;
-        if (!otherColor) otherColor = "#b8b8b8";
-        var borderColor = config.borderColor;
 
-
-      //Create function to set fill colors
-        var getColor;
-        if (colorScaling==="linear"){
-            var colorRange = chroma.scale(colors);
-
-            var arr;
-            if (hasOther){
-                arr = colorRange.colors(numSlices-1);
-                arr.push(otherColor);
-            }
-            else{
-                arr = colorRange.colors(numSlices);
-            }
-
-            getColor = function(i){
-                return arr[i];
-            };
+      //Set fill colors
+        var colors;
+        var colorRange = chroma.scale(config.colors);
+        if (hasOther){
+            colors = colorRange.colors(numSlices-1);
+            colors.push(config.otherColor);
         }
-        else if (colorScaling==="ordinal"){
-            getColor = d3.scaleOrdinal(colors);
+        else{
+            colors = colorRange.colors(numSlices);
         }
+
 
 
         var arc = d3.arc()
@@ -333,9 +313,9 @@ bluewave.charts.PieChart = function(parent, config) {
         .append("path")
         .attr("d", arc)
         .attr("fill", function (d,i) {
-            return getColor(i);
+            return colors[i];
         })
-        .attr("stroke", borderColor)
+        .attr("stroke", config.borderColor)
         .style("stroke-width", "1px")
         .on("mouseover", mouseover)
         .on("mousemove", mousemove)
