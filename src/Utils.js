@@ -1070,31 +1070,43 @@ bluewave.chart.utils = {
    */
     getColorRange: function(numColors, colors){
 
-        var arr = [];
+        if (typeof chroma !== 'undefined'){
 
-        if (colors.length>2){
-            var numBins = colors.length-1;
-            var colorsPerBin = numColors/numBins;
-            var wholeNumber = colorsPerBin % 1 == 0;
-            if (!wholeNumber) colorsPerBin = Math.floor(colorsPerBin);
+          //Some bluewave apps/libs use chroma which makes things easy
+            var colorRange = chroma.scale(colors);
+            return colorRange.colors(numColors);
 
-            for (var i=0; i<colors.length-1; i++){
-                var r = [colors[i], colors[i+1]];
-                var fn = d3.scaleLinear().domain([0, colorsPerBin-1]).range(r);
-                for (var j=0; j<colorsPerBin; j++){
-                    arr.push(d3.color(fn(j)).formatHex());
-                }
-            }
         }
-        else {
-            var fn = d3.scaleLinear().domain([0, numColors-1]).range(colors);
+        else{ //use d3
+
+
+          //Create domain with a range of -1 to 1
+            var domain = [-1];
+            var increment = 2/(colors.length-1);
+            for (var i=0; i<colors.length-2; i++){
+                var previous = domain[domain.length-1];
+                domain.push(previous+increment);
+            }
+            domain.push(1);
+
+
+          //Create color function
+            var getColor = d3.scaleLinear()
+                .domain(domain)
+                .range(colors);
+
+
+          //Create colors
+            var arr = [];
             for (var i=0; i<numColors; i++){
-                arr.push(d3.color(fn(i)).formatHex());
+                var p = i/(numColors-1);
+                var x = (p*2)-1;
+                var color = d3.color(getColor(x)).formatHex();
+                arr.push(color);
             }
+
+            return arr;
         }
-
-
-        return arr;
     },
 
 
@@ -1104,7 +1116,8 @@ bluewave.chart.utils = {
   /** Used to classify data using Jenks natural breaks optimization
    *  @param data An array of numbers
    *  @param n_classes Number of classes
-   *  @return Array of values or null
+   *  @return Array of values or null. Return values are sorted in ascending
+   *  order so that the smallest value appears first in the array.
    */
     getNaturalBreaks: function(data, n_classes) {
 
@@ -1261,7 +1274,7 @@ bluewave.chart.utils = {
         var arr = [];
         try{
             arr = breaks(data, lower_class_limits, n_classes);
-            arr.unshift(0);
+            //arr.unshift(0);
             arr = [...new Set(arr)];
         }
         catch(e){
