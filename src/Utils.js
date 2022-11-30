@@ -1061,6 +1061,25 @@ bluewave.chart.utils = {
 
 
   //**************************************************************************
+  //** mixColors
+  //**************************************************************************
+  /** Used to mix 2 colors together
+   *  @param ratio The mix ratio is a value between 0 and 1
+   */
+    mixColors: function(color1, color2, ratio){
+        if (typeof chroma !== 'undefined'){
+            return chroma.mix(color1, color2, ratio, 'rgb').hex();
+        }
+        else{ //use d3
+            var getColor = d3.scaleLinear()
+                .domain([0,1])
+                .range([color1, color2]);
+            return d3.color(getColor(ratio)).formatHex();
+        }
+    },
+
+
+  //**************************************************************************
   //** getColorRange
   //**************************************************************************
   /** Returns a range of colors using a given set of colors
@@ -1071,11 +1090,7 @@ bluewave.chart.utils = {
     getColorRange: function(numColors, colors){
 
         if (typeof chroma !== 'undefined'){
-
-          //Some bluewave apps/libs use chroma which makes things easy
-            var colorRange = chroma.scale(colors);
-            return colorRange.colors(numColors);
-
+            return chroma.scale(colors).colors(numColors);
         }
         else{ //use d3
 
