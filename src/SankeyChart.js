@@ -201,7 +201,7 @@ bluewave.charts.SankeyChart = function(parent, config) {
             else{
                 linkColor = config.links.color;
             }
-            return chroma.mix(linkColor, "white", 1-opacity).css();
+            return mixColors(linkColor, "white", 1-opacity);
         };
 
 
@@ -317,6 +317,7 @@ bluewave.charts.SankeyChart = function(parent, config) {
     var merge = javaxt.dhtml.utils.merge;
     var onRender = bluewave.chart.utils.onRender;
     var initChart = bluewave.chart.utils.initChart;
+    var mixColors = bluewave.chart.utils.mixColors;
 
     init();
 };
