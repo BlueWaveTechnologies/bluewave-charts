@@ -288,16 +288,9 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
       //Set fill colors
-        var colors;
-        var colorRange = chroma.scale(config.colors);
-        if (hasOther){
-            colors = colorRange.colors(numSlices-1);
-            colors.push(config.otherColor);
-        }
-        else{
-            colors = colorRange.colors(numSlices);
-        }
-
+        var numColors = hasOther ? numSlices-1 : numSlices;
+        var colors = getColorRange(numColors, config.colors);
+        if (hasOther) colors.push(config.otherColor);
 
 
         var arc = d3.arc()
@@ -658,7 +651,7 @@ bluewave.charts.PieChart = function(parent, config) {
     var onRender = bluewave.chart.utils.onRender;
     var isArray = bluewave.chart.utils.isArray;
     var initChart = bluewave.chart.utils.initChart;
-    var getType = bluewave.chart.utils.getType;
+    var getColorRange = bluewave.chart.utils.getColorRange;
     var createTooltip = bluewave.chart.utils.createTooltip;
     var createKeyValueDataset = bluewave.chart.utils.createKeyValueDataset;
     var round = javaxt.dhtml.utils.round;
