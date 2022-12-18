@@ -141,7 +141,13 @@ bluewave.charts.TreeMapChart = function(parent, config) {
   //**************************************************************************
     this.update = function(chartConfig, data){
         me.clear();
-        me.setConfig(chartConfig);
+
+        if (arguments.length>1){
+            me.setConfig(chartConfig);
+        }
+        else{
+            data = arguments[0];
+        }
 
         var parent = svg.node().parentNode;
         onRender(parent, function(){
@@ -208,45 +214,46 @@ bluewave.charts.TreeMapChart = function(parent, config) {
    */
     var getDataHierarchy = function(data){
 
+      //Generate unique list of group names
         var groupNames = [];
-        var groupsToUse;
         if (config.groupBy !== null){
-          //populate groupNames by filtering through the config-set dataset 'groupBy'
-          //column to seperate records into unique values of this column
+            var map = {};
             data.forEach((d)=>{
                 var group = d[config.groupBy];
-                groupNames.push(group);
+                map[group] = true;
             });
-
-            function onlyUnique(value, index, self) { // returns only unique values from an array
-                return self.indexOf(value) === index;
-            }
-
-
-            groupsToUse = groupNames.filter(onlyUnique);
+            groupNames = Object.keys(map);
         }
 
 
 
       //Update value fields in the data
+        var arr = [];
         data.forEach((d)=>{
             var value = d[config.value];
-            d[config.value] = bluewave.chart.utils.parseFloat(value);
+            var f = bluewave.chart.utils.parseFloat(value);
+            if (f==0 || isNaN(f)){
+
+            }
+            else{
+                d[config.value] = f;
+                arr.push(d);
+            }
         });
+        if (arr.length!==data.length) data = arr;
 
 
 
 
         var dataHierarchy = {
-            "children":[],
-            "name":"all"
+            children: [],
+            name: "all"
         };
 
 
 
         if (config.groupBy !== null){
-
-            groupsToUse.forEach((g)=> {
+            groupNames.forEach((g)=> {
                 dataHierarchy["children"].push({"name": g, "children":[], "colname":"level2"});
                 var objectToInsertTo = getNestedObject(dataHierarchy["children"], 'name', g);
 
@@ -267,8 +274,54 @@ bluewave.charts.TreeMapChart = function(parent, config) {
                     };
                 });
             });
-        }
 
+
+            var values = {};
+            dataHierarchy.children.forEach((d)=>{
+                var val = 0;
+                d.children.forEach((c)=>{
+                    val+=c.value;
+                });
+                values[d.name] = val;
+            });
+
+
+          //Identify groups to remove
+            var del = [];
+            for (var key in values) {
+                if (values.hasOwnProperty(key)){
+                    var value = values[key];
+                    if (value==0) del.push(key);
+                }
+            }
+
+
+          //Remove empty groups
+            while (del.length>0){
+                var d = del.shift();
+                for (var i=0; i<dataHierarchy.children.length; i++){
+                    if (dataHierarchy.children[i].name==d){
+                        dataHierarchy.children.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+
+
+          //Sort children by value
+            dataHierarchy.children.sort((a, b)=>{
+                return values[b.name]-values[a.name];
+            });
+
+
+
+          //Update groupNames using sorted values
+            groupNames = [];
+            dataHierarchy.children.forEach((d)=>{
+                groupNames.push(d.name);
+            });
+
+        }
         else{
             dataHierarchy["children"].push({"name": "", "children":[], "colname":"level2"});
             var objectToInsertTo = getNestedObject(dataHierarchy["children"], 'name', "");
