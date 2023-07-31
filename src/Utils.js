@@ -7,12 +7,21 @@ bluewave.chart.utils = {
   //** initChart
   //**************************************************************************
     initChart: function(parent, callback, scope){
+
+        var onReady = function(){
+            var g = svg.append("g");
+            if (callback) callback.apply(scope,[svg, g]);
+        };
+
+
         var svg;
         if (parent instanceof d3.selection){
             svg = parent;
+            onReady();
         }
         else if (parent instanceof SVGElement) {
             svg = d3.select(parent);
+            onReady();
         }
         else{
 
@@ -30,15 +39,48 @@ bluewave.chart.utils = {
 
 
             bluewave.chart.utils.onRender(parent, function(){
-                var width = parent.offsetWidth;
-                var height = parent.offsetHeight;
-                svg.attr("viewBox", `0 0 ${width} ${height}`);
+                setTimeout(function(){
+                    var width = parent.offsetWidth;
+                    var height = parent.offsetHeight;
+                    svg.attr("viewBox", `0 0 ${width} ${height}`);
+                    onReady();
+                }, 200);
             });
 
         }
 
-        var g = svg.append("g");
-        if (callback) callback.apply(scope,[svg, g]);
+    },
+
+
+  //**************************************************************************
+  //** checkSVG
+  //**************************************************************************
+  /** Used to check whether a given chart is ready for rendering by checking
+   *  if an SVG element has been added to the document. Calls a callback if
+   *  the SVG exists or when it is added.
+   */
+    checkSVG: function(chart, callback){
+        var svg = chart.getSVG();
+
+        if (!svg){
+            var timer;
+
+            var checkSVG = function(){
+                var svg = chart.getSVG();
+                if (!svg){
+                    timer = setTimeout(checkSVG, 100);
+                }
+                else{
+                    clearTimeout(timer);
+                    if (callback) callback.apply(chart, [svg]);
+                }
+            };
+
+            timer = setTimeout(checkSVG, 100);
+        }
+        else{
+            if (callback) callback.apply(chart, [svg]);
+        }
     },
 
 
