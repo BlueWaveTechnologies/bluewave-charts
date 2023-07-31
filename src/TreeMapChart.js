@@ -149,10 +149,17 @@ bluewave.charts.TreeMapChart = function(parent, config) {
             data = arguments[0];
         }
 
-        var parent = svg.node().parentNode;
-        onRender(parent, function(){
+        checkSVG(me, function(){
             renderChart(data);
         });
+    };
+
+
+  //**************************************************************************
+  //** getSVG
+  //**************************************************************************
+    this.getSVG = function(){
+        return svg;
     };
 
 
@@ -888,7 +895,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
   //** Utils
   //**************************************************************************
    var merge = javaxt.dhtml.utils.merge;
-   var onRender = bluewave.chart.utils.onRender;
+   var checkSVG = bluewave.chart.utils.onRencheckSVGder;
    var round = javaxt.dhtml.utils.round;
    var initChart = bluewave.chart.utils.initChart;
    var createTooltip = bluewave.chart.utils.createTooltip;

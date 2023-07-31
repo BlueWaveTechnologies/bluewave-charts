@@ -142,11 +142,19 @@ bluewave.charts.PieChart = function(parent, config) {
             }
         }
 
-        var parent = svg.node().parentNode;
-        onRender(parent, function(){
+        checkSVG(me, function(){
             update(data);
         });
     };
+
+
+  //**************************************************************************
+  //** getSVG
+  //**************************************************************************
+    this.getSVG = function(){
+        return svg;
+    };
+
 
     var clearChart = function(){
         if (pieArea){
@@ -648,7 +656,7 @@ bluewave.charts.PieChart = function(parent, config) {
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var onRender = bluewave.chart.utils.onRender;
+    var checkSVG = bluewave.chart.utils.checkSVG;
     var isArray = bluewave.chart.utils.isArray;
     var initChart = bluewave.chart.utils.initChart;
     var getColorRange = bluewave.chart.utils.getColorRange;

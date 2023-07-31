@@ -114,10 +114,17 @@ bluewave.charts.CalendarChart = function(parent, config) {
         }
 
 
-        var parent = svg.node().parentNode;
-        onRender(parent, function(){
+        checkSVG(me, function(){
             renderChart(data);
         });
+    };
+
+
+  //**************************************************************************
+  //** getSVG
+  //**************************************************************************
+    this.getSVG = function(){
+        return svg;
     };
 
 
@@ -400,7 +407,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
    //** Utils
    //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var onRender = bluewave.chart.utils.onRender;
+    var checkSVG = bluewave.chart.utils.checkSVG;
     var initChart = bluewave.chart.utils.initChart;
     var createTooltip = bluewave.chart.utils.createTooltip;
     var getColorRange = bluewave.chart.utils.getColorRange;

@@ -35,23 +35,25 @@ bluewave.charts.MapChart = function(parent, config) {
         initChart(parent, function(s, g){
             svg = s;
             mapArea = g;
-        });
 
 
-      //Watch for panning and zooming events
-        svg.call(
-            d3.zoom().scaleExtent([1, 1])
-            .on('zoom', recenter) //vs .on('end'
-        );
+          //Watch for panning and zooming events
+            svg.call(
+                d3.zoom().scaleExtent([1, 1])
+                .on('zoom', recenter) //vs .on('end'
+            );
 
-      //Watch for mouse click events
-        svg.on("click", function(e) {
-            var projection = me.getProjection();
-            if (!projection) return;
 
-            var point = d3.pointer(e);
-            var coord = projection.invert(point);
-            me.onMouseClick(coord[1], coord[0], e);
+          //Watch for mouse click events
+            svg.on("click", function(e) {
+                var projection = me.getProjection();
+                if (!projection) return;
+
+                var point = d3.pointer(e);
+                var coord = projection.invert(point);
+                me.onMouseClick(coord[1], coord[0], e);
+            });
+
         });
     };
 
@@ -331,12 +333,20 @@ bluewave.charts.MapChart = function(parent, config) {
     this.update = function(callback){
         clearChart();
 
-        var parent = svg.node().parentNode;
-        onRender(parent, function(){
+        checkSVG(me, function(svg){
+            var parent = svg.node().parentNode;
             update(parent);
             if (callback) callback();
         });
 
+    };
+
+
+  //**************************************************************************
+  //** getSVG
+  //**************************************************************************
+    this.getSVG = function(){
+        return svg;
     };
 
 
@@ -1021,7 +1031,7 @@ bluewave.charts.MapChart = function(parent, config) {
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
     var isArray = bluewave.chart.utils.isArray;
-    var onRender = bluewave.chart.utils.onRender;
+    var checkSVG = bluewave.chart.utils.checkSVG;
     var initChart = bluewave.chart.utils.initChart;
     var createTooltip = bluewave.chart.utils.createTooltip;
 

@@ -138,10 +138,18 @@ bluewave.charts.SankeyChart = function(parent, config) {
         }
 
 
-        var parent = svg.node().parentNode;
-        onRender(parent, function(){
+        checkSVG(me, function(){
+            var parent = svg.node().parentNode;
             renderChart(parent);
         });
+    };
+
+
+  //**************************************************************************
+  //** getSVG
+  //**************************************************************************
+    this.getSVG = function(){
+        return svg;
     };
 
 
@@ -315,7 +323,7 @@ bluewave.charts.SankeyChart = function(parent, config) {
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var onRender = bluewave.chart.utils.onRender;
+    var checkSVG = bluewave.chart.utils.checkSVG;
     var initChart = bluewave.chart.utils.initChart;
     var mixColors = bluewave.chart.utils.mixColors;
 

@@ -86,10 +86,17 @@ bluewave.charts.ScatterChart = function(parent, config) {
         }
 
 
-        var parent = svg.node().parentNode;
-        onRender(parent, function(){
+        checkSVG(me, function(){
             renderChart(data);
         });
+    };
+
+
+  //**************************************************************************
+  //** getSVG
+  //**************************************************************************
+    this.getSVG = function(){
+        return svg;
     };
 
 

@@ -102,10 +102,17 @@ bluewave.charts.LineChart = function(parent, config) {
   //** update
   //**************************************************************************
     this.update = function(){
-        var parent = svg.node().parentNode;
-        onRender(parent, function(){
+        checkSVG(me, function(){
             renderChart();
         });
+    };
+
+
+  //**************************************************************************
+  //** getSVG
+  //**************************************************************************
+    this.getSVG = function(){
+        return svg;
     };
 
 
@@ -206,11 +213,11 @@ bluewave.charts.LineChart = function(parent, config) {
             let yKey = layers[i].yAxis;
 
 
-            //If axes not picked, skip pushing/rendering this dataset
+          //If axes not picked, skip pushing/rendering this dataset
             if (!xKey || !yKey) continue;
 
 
-
+          //Create data for the pie chart
             var sumData = createKeyValueDataset(layers[i].data, xKey, yKey);
 
 
@@ -1102,7 +1109,7 @@ bluewave.charts.LineChart = function(parent, config) {
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var onRender = bluewave.chart.utils.onRender;
+    var checkSVG = bluewave.chart.utils.checkSVG;
 
     var initChart = bluewave.chart.utils.initChart;
     var getType = bluewave.chart.utils.getType;
