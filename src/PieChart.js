@@ -34,6 +34,14 @@ bluewave.charts.PieChart = function(parent, config) {
 
         showLabels: true,
         labelOffset: 100,
+
+      /** If true and if the pieCutout is greater than 0, will render a label in
+       *  the center of the pie chart. By default, the label will render the sum
+       *  of all the values in the chart. This can be overridden with a custom
+       *  getCenterLabel() method.
+       */
+        showSum: false,
+
         lineColor: "#777",
         borderColor: "#777",
         extendLines: false,
@@ -97,6 +105,42 @@ bluewave.charts.PieChart = function(parent, config) {
         var val = bluewave.chart.utils.parseFloat(value);
         if (isNaN(val)) return value;
         return round(val, 2);
+    };
+
+
+  //**************************************************************************
+  //** getCenterLabel
+  //**************************************************************************
+  /** Called to create a label in the center of the pie chart when showSum is
+   *  true and the pieCutout is greater than 0
+   */
+    this.getCenterLabel = function(pieData){
+        var sum = 0;
+        pieData.forEach((d)=>{
+            sum+=d.value;
+        });
+
+        var units = "";
+        if (sum>=1000){
+            sum = Math.round(sum/1000);
+            units = "k";
+
+            if (sum>=1000){
+                sum = Math.round(sum/1000);
+                units = "M";
+
+                if (sum>=1000){
+                    sum = Math.round(sum/1000);
+                    units = "B";
+                }
+
+                if (sum>=1000){
+                    sum = Math.round(sum/1000);
+                    units = "T";
+                }
+            }
+        }
+        return sum+units;
     };
 
 
@@ -262,8 +306,8 @@ bluewave.charts.PieChart = function(parent, config) {
 
       //Compute inner and outer radius for the pie chart
         var radius = Math.min(width, height) / 2;
-        var cutout = config.pieCutout;
-        if (cutout==null) cutout = 0.65;
+        var cutout = parseFloat(config.pieCutout);
+        if (isNaN(cutout)) cutout = 0.65;
         var innerRadius = radius*cutout;
 
 
@@ -296,8 +340,11 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
       //Set fill colors
+        var colors = config.colors;
         var numColors = hasOther ? numSlices-1 : numSlices;
-        var colors = getColorRange(numColors, config.colors);
+        if (numColors>config.colors.length){
+            colors = getColorRange(numColors, colors);
+        }
         if (hasOther) colors.push(config.otherColor);
 
 
@@ -321,6 +368,23 @@ bluewave.charts.PieChart = function(parent, config) {
         .on("mouseover", mouseover)
         .on("mousemove", mousemove)
         .on("mouseleave", mouseleave);
+
+
+
+      //Create label in the center of the pie chart as needed
+        var showSum = config.showSum===true ? true : false;
+        if (showSum && cutout>0){
+            var text = me.getCenterLabel(pieData);
+            if (text){
+                var label = pieChart.append("text")
+                  .attr("text-anchor", "middle")
+                  .attr('font-size', '4em')
+                  .attr('y', 20);
+
+                label.text(text);
+            }
+        }
+
 
 
       //Render lines and labels as needed
