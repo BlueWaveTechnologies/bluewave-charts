@@ -139,7 +139,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
   //**************************************************************************
   //** update
   //**************************************************************************
-    this.update = function(chartConfig, data){
+    this.update = function(chartConfig, data, callback){
         me.clear();
 
         if (arguments.length>1){
@@ -151,6 +151,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
         checkSVG(me, function(){
             renderChart(data);
+            if (callback) callback();
         });
     };
 
@@ -179,6 +180,23 @@ bluewave.charts.TreeMapChart = function(parent, config) {
             });
         }
         return arr;
+    };
+
+
+    this.getGroups = function(){
+        var groups = {};
+        if (cells){
+            cells.each(function(n) {
+                var groupName = n.data.group;
+                groups[groupName] = [];
+            });
+        }
+        for (var groupName in groups) {
+            if (groups.hasOwnProperty(groupName)){
+                groups[groupName] = me.getGroup(groupName)
+            }
+        }
+        return groups;
     };
 
 
@@ -223,13 +241,20 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
       //Generate unique list of group names
         var groupNames = [];
+        var groupBy = null;
         if (config.groupBy !== null){
-            var map = {};
-            data.forEach((d)=>{
-                var group = d[config.groupBy];
-                map[group] = true;
-            });
-            groupNames = Object.keys(map);
+            var groupBy = (config.groupBy + "").trim();
+            if (groupBy.length>0){
+                var map = {};
+                data.forEach((d)=>{
+                    var group = d[groupBy];
+                    map[group] = true;
+                });
+                groupNames = Object.keys(map);
+            }
+            else{
+                groupBy = null;
+            }
         }
 
 
@@ -259,14 +284,14 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
 
 
-        if (config.groupBy !== null){
+        if (groupBy !== null){
             groupNames.forEach((g)=> {
                 dataHierarchy["children"].push({"name": g, "children":[], "colname":"level2"});
                 var objectToInsertTo = getNestedObject(dataHierarchy["children"], 'name', g);
 
                 data.forEach((d)=>{
                     var userValue = d[config.key];
-                    var groupByValue = d[config.groupBy];
+                    var groupByValue = d[groupBy];
                     var value = d[config.value];
 
                     if (g === groupByValue){
