@@ -172,8 +172,10 @@ bluewave.charts.TreeMapChart = function(parent, config) {
         if (cells){
             cells.each(function(n) {
                 if (n.data.group===groupName){
+                    var cell = d3.select(this).node();
                     arr.push({
-                        rect: d3.select(this).node(),
+                        cell: cell,
+                        rect: cell, //legacy, should be deprecated
                         data: n.data
                     });
                 }
@@ -183,6 +185,9 @@ bluewave.charts.TreeMapChart = function(parent, config) {
     };
 
 
+  //**************************************************************************
+  //** getGroups
+  //**************************************************************************
     this.getGroups = function(){
         var groups = {};
         if (cells){
@@ -403,16 +408,31 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
 
 
-      //Create getColor function used to set cell color
+      //Get group names
         var groupNames = data.groupNames;
-        if (typeof(groupNames) !== "undefined"){
-            getColor = d3.scaleOrdinal()
-                .domain(groupNames)
-                .range(config.colors);
+        if (typeof(groupNames) === "undefined" || groupNames === null){
+            groupNames = [];
         }
-        else{
-            getColor = d3.scaleOrdinal()
-                .range(config.colors);
+
+
+      //Create an array of colors, one for each group name
+        var colors = config.colors;
+        var numColors = groupNames.length;
+        if (numColors>colors.length){
+            colors = getColorRange(numColors, colors);
+        }
+
+
+      //Create getColor function used to set cell color
+        getColor = function(groupName){
+            var color = colors[0];
+            for (var i=0; i<groupNames.length; i++){
+                if (groupNames[i]===groupName){
+                    color = colors[i];
+                    break;
+                }
+            }
+            return color;
         };
 
 
@@ -925,6 +945,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
    var initChart = bluewave.chart.utils.initChart;
    var createTooltip = bluewave.chart.utils.createTooltip;
    var setStyle = bluewave.chart.utils.setStyle;
+   var getColorRange = bluewave.chart.utils.getColorRange;
 
    init();
 };
