@@ -895,7 +895,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
   //** Utils
   //**************************************************************************
    var merge = javaxt.dhtml.utils.merge;
-   var checkSVG = bluewave.chart.utils.onRencheckSVGder;
+   var checkSVG = bluewave.chart.utils.checkSVG;
    var round = javaxt.dhtml.utils.round;
    var initChart = bluewave.chart.utils.initChart;
    var createTooltip = bluewave.chart.utils.createTooltip;
