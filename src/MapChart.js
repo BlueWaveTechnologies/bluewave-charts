@@ -246,8 +246,10 @@ bluewave.charts.MapChart = function(parent, config) {
   //** clearChart
   //**************************************************************************
     var clearChart = function(){
-        mapArea.node().innerHTML = "";
-        mapArea.attr("transform", null);
+        if (mapArea){
+            mapArea.node().innerHTML = "";
+            mapArea.attr("transform", null);
+        }
     };
 
 
