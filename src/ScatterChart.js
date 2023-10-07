@@ -555,6 +555,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
     var merge = javaxt.dhtml.utils.merge;
     var onRender = bluewave.chart.utils.onRender;
     var isArray = bluewave.chart.utils.isArray;
+    var checkSVG = bluewave.chart.utils.checkSVG;
     var initChart = bluewave.chart.utils.initChart;
     var getType = bluewave.chart.utils.getType;
     var getScale = bluewave.chart.utils.getScale;
