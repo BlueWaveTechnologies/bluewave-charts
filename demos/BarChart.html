@@ -54,7 +54,8 @@
   //Specify x and y axis in the chart config
     var config = {
         xAxis: "date",
-        yAxis: "value"
+        yAxis: "value",
+        borderRadius: 7
     };
 
 
@@ -76,7 +77,7 @@
 
   //Create csv data for the bar chart
     var csv =
-    "group,Nitrogen,normal,stress\n"+
+    "plant,nitrogen,oxygen,stress\n"+
     "banana,12,1,13\n"+
     "poacee,6,6,33\n"+
     "sorgho,11,28,12\n"+
@@ -90,9 +91,10 @@
   //Specify x and y axis and explicitly define
   //the layout in the chart config
     var config = {
-        yAxis: "group",
-        xAxis: "normal",
-        layout: "horizontal"
+        yAxis: "plant",
+        xAxis: "oxygen",
+        layout: "horizontal",
+        borderRadius: 7
     };
 
 
@@ -162,6 +164,7 @@
   </script>
 
   <h2>Grouped Bar Chart</h2>
+  <p>Bar graph separated by group</p>
   <div class="demo-row">
     <div id="demo3" class="chart-window"></div>
     <script>
