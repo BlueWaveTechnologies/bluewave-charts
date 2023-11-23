@@ -119,22 +119,26 @@ bluewave.chart.utils = {
   //**************************************************************************
     drawGridlines: function(svg, xScale, yScale, height, width, xGrid, yGrid){
 
-        if(xGrid){
+        if (xGrid){
             svg.append("g")
             .attr("class", "grid")
             .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(xScale)
-            .tickSize(-height)
-            .tickFormat("")
+            .call(
+                d3.axisBottom(xScale)
+                .ticks(xGrid)
+                .tickSize(-height)
+                .tickFormat("")
             );
         }
 
-        if(yGrid){
+        if (yGrid){
             svg.append("g")
             .attr("class", "grid")
-            .call(d3.axisLeft(yScale)
-            .tickSize(-width)
-            .tickFormat("")
+            .call(
+                d3.axisLeft(yScale)
+                .ticks(yGrid)
+                .tickSize(-width)
+                .tickFormat("")
             );
         }
     },
@@ -240,15 +244,15 @@ bluewave.chart.utils = {
 
 
         var scaleOption = chartConfig.scaling==="logarithmic" ? "logarithmic" : "linear";
-        sb = getScale(yKey,yType,[axisHeight,0],chartData,minData,scaleOption);
+        sb = getScale(yKey,yType,[axisHeight,0],chartData,minData,scaleOption,chartConfig.yMin,chartConfig.yMax);
         var y = sb.scale;
         var yBand = sb.band;
 
 
 
-        var labelWidth = 10;
-        var domainLength = x.domain().length;
-        var widthCheck = domainLength * labelWidth < axisWidth;
+//        var labelWidth = 10;
+//        var domainLength = x.domain().length;
+//        var widthCheck = domainLength * labelWidth < axisWidth;
 
 
 //        const formatMillisecond = d3.timeFormat(".%L"),
@@ -270,14 +274,14 @@ bluewave.chart.utils = {
 //                                    : formatYear)(date);
 //        }
 
-        var tickFilter = function(d, i) {
-
-            let maxLabels = parseInt(axisWidth / labelWidth);
-
-            //Ensure first tick is displayed and every multiple of maxLabels
-            if (i === 0) return true;
-            return !(i % maxLabels);
-        };
+//        var tickFilter = function(d, i) {
+//
+//            let maxLabels = parseInt(axisWidth / labelWidth);
+//
+//            //Ensure first tick is displayed and every multiple of maxLabels
+//            if (i === 0) return true;
+//            return !(i % maxLabels);
+//        };
 
         var updateDefaultTicks = function(axis, type){
             var numWholeNumbers;
@@ -348,30 +352,23 @@ bluewave.chart.utils = {
             return format;
         };
 
-        var getBoxes = function(axis){
+        var getBoxes = function(axis, padding=0){
             var boxes = [];
             axis.selectAll("text").each(function(d, i) {
                 var box = javaxt.dhtml.utils.getRect(this);
                 boxes.push({
-                    left: box.x,
-                    right: box.x+box.width,
-                    top: box.y,
-                    bottom: box.y+box.height
+                    left: box.x-padding,
+                    right: box.x+box.width+padding,
+                    top: box.y-padding,
+                    bottom: box.y+box.height+padding
                 });
             });
             return boxes;
         };
 
 
-        var foundIntersection = function(boxes, buffer=0){
+        var foundIntersection = function(boxes){
             var foundIntersection = false;
-
-            boxes.forEach(function(box){
-                box.top -= buffer;
-                box.left -= buffer;
-                box.right += buffer;
-                box.bottom += buffer;
-            });
 
             for (var i = 0; i < boxes.length; i++) {
                 var box = boxes[i];
@@ -419,7 +416,7 @@ bluewave.chart.utils = {
             xAxis.call(
                 d3.axisBottom(x)
                 .ticks(xTicks)
-                .tickValues(widthCheck ? null : x.domain().filter(tickFilter))
+                //.tickValues(widthCheck ? null : x.domain().filter(tickFilter))
                 .tickFormat(xFormat)
             );
 
@@ -427,14 +424,53 @@ bluewave.chart.utils = {
 
 
           //Rotate x-axis labels as needed
-            var xBoxes = getBoxes(xAxis);
-            var xLabelsIntersect = foundIntersection(xBoxes, 0);
-
+            var xBoxes = getBoxes(xAxis, 0);
+            var xLabelsIntersect = foundIntersection(xBoxes);
             if (xLabelsIntersect){
+
+              //Rotate labels along the x-axis
                 xAxis
                 .selectAll("text")
                 .attr("transform", "translate(-10,0)rotate(-45)")
                 .style("text-anchor", "end");
+
+
+              //Find intersecting labels
+                var hide = {};
+                for (var i=0; i<xBoxes.length; i++){
+                    xBoxes[i] = bluewave.chart.utils.rotateBox(xBoxes[i], 315);
+                }
+                for (var i=xBoxes.length-1; i>=0; i--){
+                    var polygon = xBoxes[i];
+
+                    for (var j=i-1; j>=0; j--){
+                        var nextPoly = xBoxes[j];
+                        var intersects = false;
+                        for (var k=0; k<nextPoly.length; k++){
+                            var point = nextPoly[k];
+                            if (bluewave.chart.utils.pointInPoly(point, polygon)){
+                                intersects = true;
+                                break;
+                            }
+                        }
+                        if (intersects){
+                            hide[j+""] = true;
+                            i--;
+                        }
+                        else{
+                            break;
+                        }
+                    }
+                }
+
+
+              //Hide any labels that intersect
+                xAxis
+                    .selectAll("text")
+                    .attr("visibility", function (text, i) {
+                        if (hide[i+""]) return "hidden";
+                        return "visible";
+                    });
             }
 
         }
@@ -442,6 +478,10 @@ bluewave.chart.utils = {
 
       //Render y-axis
         var yFormat = getTickFormat(yType, chartConfig.yFormat);
+        var yTicks;
+        if (!(chartConfig.yTicks===true || chartConfig.yTicks===false)){
+            yTicks = chartConfig.yTicks;
+        }
         var yAxis = plotArea
             .append("g");
 
@@ -470,11 +510,13 @@ bluewave.chart.utils = {
         else{
 
             yAxis.call(scaleOption==="linear" ?
-                d3.axisLeft(y).tickFormat(yFormat)
+                d3.axisLeft(y)
+                .ticks(yTicks)
+                .tickFormat(yFormat)
                 :
                 d3.axisLeft(y)
-                    .ticks(10, ",")
-                    .tickFormat(yFormat)
+                .ticks(10, ",")
+                .tickFormat(yFormat)
             );
 
             if (!chartConfig.yFormat) updateDefaultTicks(yAxis, yType);
@@ -1419,6 +1461,62 @@ bluewave.chart.utils = {
             }
         }
 
+    },
+
+
+  //**************************************************************************
+  //** rotateBox
+  //**************************************************************************
+  /** Used to rotate a rectangle around the upper right point (pivot point).
+   *  Credit: https://stackoverflow.com/a/22261463
+   *  @param box Rectangle
+   *  @param deg Angle in degrees clockwise from the pivot point
+   */
+    rotateBox: function(box, deg){
+        var angleInRad = deg * Math.PI / 180;
+        var rotatePoint = function(pivot, point, angle) {
+          // Rotate clockwise, angle in radians
+          var x = Math.round((Math.cos(angle) * (point[0] - pivot[0])) -
+                             (Math.sin(angle) * (point[1] - pivot[1])) +
+                             pivot[0]),
+              y = Math.round((Math.sin(angle) * (point[0] - pivot[0])) +
+                             (Math.cos(angle) * (point[1] - pivot[1])) +
+                             pivot[1]);
+          return [x, y];
+        };
+
+
+        var pivot = [box.right, box.top];
+        return [
+           pivot,
+           rotatePoint(pivot, [box.right, box.bottom], angleInRad),
+           rotatePoint(pivot, [box.left, box.bottom], angleInRad),
+           rotatePoint(pivot, [box.left, box.top], angleInRad)
+        ];
+    },
+
+
+  //**************************************************************************
+  //** pointInPoly
+  //**************************************************************************
+  /** Used to check whether a point intersects a given polygon using a ray-
+   *  casting algorithm. Credit: https://stackoverflow.com/a/29915728
+   */
+    pointInPoly: function(point, vs) {
+
+        var x = point[0], y = point[1];
+
+        var inside = false;
+        for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+            var xi = vs[i][0], yi = vs[i][1];
+            var xj = vs[j][0], yj = vs[j][1];
+
+            var intersect = ((yi > y) != (yj > y))
+                && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+
+        return inside;
     },
 
 
