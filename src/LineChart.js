@@ -640,8 +640,26 @@ bluewave.charts.LineChart = function(parent, config) {
         xAxis = axes.xAxis;
         yAxis = axes.yAxis;
 
+        var getX = function(d, i, data){
+            var keyType = data.keyType;
+            if (!keyType) keyType = data.keyType = getType(d.key);
+
+            if (keyType==="date"){
+                return x(new Date(d.key));
+            }
+            else{
+                return x(d.key);
+            }
+        };
+
+        var getY = function(d){
+            var v = bluewave.chart.utils.parseFloat(d.value);
+            return (config.scaling === "logarithmic") ? y(v+1):y(v);
+        };
 
 
+
+      //Create an array of chart elements
         var chartElements = [];
         for (let i=0; i<arr.length; i++){
             chartElements.push({
@@ -661,32 +679,29 @@ bluewave.charts.LineChart = function(parent, config) {
         for (let i=arr.length-1; i>-1; i--){
 
             //if(stack) break;
-            var sumData = arr[i].sumData;
-
-            let fillConfig = arr[i].lineConfig.fill;
+            let sumData = arr[i].sumData;
+            let lineConfig = arr[i].lineConfig;
+            let fillConfig = lineConfig.fill;
 
             let lineColor = fillConfig.color;
             let startOpacity = fillConfig.startOpacity;
             let endOpacity = fillConfig.endOpacity;
-            var smoothingType = arr[i].lineConfig.smoothing;
+            let smoothingType = lineConfig.smoothing;
 
-            let keyType = getType(sumData[0].key);
-
-            var getX = function(d){
-                if(keyType==="date"){
-                    return x(new Date(d.key));
-                }else{
-                    return x(d.key);
-                }
-            };
-
-            var getY = function(d){
-                var v = bluewave.chart.utils.parseFloat(d["value"]);
-                return (config.scaling === "logarithmic") ? y(v+1):y(v);
-            };
 
           //Don't render area if the start and end opacity is 0
             if (startOpacity===0 && endOpacity===0) continue;
+
+
+            var getArea = function(){
+                if (smoothingType && smoothingType==="spline"){
+                    return d3.area().x(getX).y0(axisHeight).y1(getY).curve(d3.curveMonotoneX);
+                }
+                else{
+                    return d3.area().x(getX).y0(axisHeight).y1(getY);
+                }
+            };
+
 
 
           //Add color gradient to area
@@ -699,22 +714,23 @@ bluewave.charts.LineChart = function(parent, config) {
                 .append("path")
                 .datum(sumData)
                 .attr("fill", `url(#${className})`)
-                .attr(
-                    "d", d3.area()
-                    .x(getX)
-                    .y0(axisHeight)
-                    .y1(getY)
-                );
+                .attr("d", getArea());
 
         }
 
 
 
-      //Draw lines
+      //Draw lines and points
         var lineGroup = plotArea.append("g");
-        var circleGroup = plotArea.append("g");
-        circleGroup.attr("name", "circles");
         lineGroup.attr("name", "lines");
+
+        var lineGroup2 = plotArea.append("g");
+        lineGroup2.attr("name", "thicklines");
+
+        var pointGroup = plotArea.append("g");
+        pointGroup.attr("name", "points");
+
+
         for (let i=0; i<arr.length; i++){
 
             var sumData = arr[i].sumData;
@@ -759,7 +775,7 @@ bluewave.charts.LineChart = function(parent, config) {
 
 
           //Draw thick line for selection purposes
-            chartElements[i].line2 = lineGroup
+            chartElements[i].line2 = lineGroup2
                 .append("path")
                 .datum(sumData)
                 .attr("dataset", i)
@@ -775,9 +791,9 @@ bluewave.charts.LineChart = function(parent, config) {
                 });
 
 
-          //Add circles
+          //Draw points
             if (pointRadius){
-                chartElements[i].point = circleGroup
+                chartElements[i].point = pointGroup
                     .selectAll("points")
                     .data(sumData)
                     .enter()
@@ -796,24 +812,33 @@ bluewave.charts.LineChart = function(parent, config) {
             };
 
 
-          //Display end tags if checked
+          //Render tags
             if (showLabels){
                 var label = lineConfig.label;
                 if (!label) label = "Series " + (i+1);
 
                 var line = chartElements[i].line2;
                 chartElements[i].tag = createTag(sumData, lineColor, label, line);
-
             }
 
         };
 
-        //Add animations
-        var animationSteps = chartConfig.animationSteps;
+
+
+      //Add animations. Note that animations are disabled for spline lines
+        var animationSteps = bluewave.chart.utils.parseFloat(chartConfig.animationSteps);
+        for (let i=0; i<arr.length; i++){
+            var smoothingType = arr[i].lineConfig.smoothing;
+            if (smoothingType && smoothingType==="spline"){
+                animationSteps = 0;
+                break;
+            }
+        }
         if (!isNaN(animationSteps) && animationSteps > 50) {
 
+
             let lines = lineGroup.selectAll("path");
-            let circles = circleGroup.selectAll("circle");
+            let points = pointGroup.selectAll("circle");
             let fill = fillGroup.selectAll("path");
 
             let min = d3.min(minData, d => bluewave.chart.utils.parseFloat(d.value));
@@ -826,34 +851,39 @@ bluewave.charts.LineChart = function(parent, config) {
             //     return function (t) { return i(t); };
             // }
 
-            //Reset lines to y=0
+
+            var orgLines = [];
+            lines.each(function(){
+                orgLines.push(d3.select(this).attr("d"));
+            });
+
+            var orgFills = [];
+            fill.each(function(){
+                orgFills.push(d3.select(this).attr("d"));
+            });
+
+
+          //Reset position of all the lines, points, and fills to scaleY (e.g. 0)
             lines.attr("d", d3.line().x(getX).y(scaleY));
+            points.attr("cx", getX).attr("cy", scaleY);
+            fill.attr("d", d3.area().x(getX).y0(axisHeight).y1(scaleY));
 
-            circles.attr("cx", getX).attr("cy", scaleY);
-
-            fill.attr("d", d3.area()
-                    .x(getX)
-                    .y0( axisHeight )
-                    .y1(scaleY)
-                );
 
             //Transition back to calculated y-values
             lines.transition().duration(animationSteps)
-                .attr("d", getLine())
+                .attr("d", function(d, i){
+                    return orgLines[i];
+                });
 
-                // .delay(function(d, i) { return i * 2000; })
-                // .attrTween("stroke-dasharray", animateLine)
 
-            circles.transition().duration(animationSteps)
-                .attr("cx", getX).attr("cy", getY)
+            points.transition().duration(animationSteps)
+                .attr("cx", getX).attr("cy", getY);
 
             fill.transition().duration(animationSteps)
-                .attr(
-                    "d", d3.area()
-                    .x(getX)
-                    .y0(axisHeight)
-                    .y1(getY)
-                    );
+                .attr("d", function(d, i){
+                    return orgFills[i];
+                });
+
 
             if (showLabels) {
                 for (var i = 0; i < chartElements.length; i++) {
@@ -864,19 +894,19 @@ bluewave.charts.LineChart = function(parent, config) {
                     var polyTransform = poly.attr("transform");
                     var textTransform = text.attr("transform");
 
-                    //Get x-coordinate from transform string
+                  //Get x-coordinate from transform string
                     var polyX = polyTransform.slice(10).split(",")[0];
                     var textX = textTransform.slice(10).split(",")[0];
 
-                    //Set polygon vertex to (x, 0)
+                  //Set polygon vertex to (x, 0)
                     poly.attr("transform", "translate(" + (polyX) + "," + (axisHeight - 9.6) + ")");
                     text.attr("transform", "translate(" + (textX) + "," + (axisHeight) + ")");
 
                     poly.transition().duration(animationSteps)
-                        .attr("transform", polyTransform)
+                        .attr("transform", polyTransform);
 
                     text.transition().duration(animationSteps)
-                        .attr("transform", textTransform)
+                        .attr("transform", textTransform);
 
                 }
             };
