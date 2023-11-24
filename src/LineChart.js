@@ -5,7 +5,7 @@ if(!bluewave.charts) bluewave.charts={};
 //**  LineChart
 //******************************************************************************
 /**
- *   Chart used to display a line (or curve) in a 2D cartesian grid.
+ *   Chart used to display lines (or curves) in a 2D cartesian grid.
  *
  ******************************************************************************/
 
@@ -13,11 +13,45 @@ bluewave.charts.LineChart = function(parent, config) {
 
     var me = this;
     var defaultConfig = {
+
+      /** If true and if xTicks is greater than 0, will render vertical grid
+       *  lines at each tick along the x-axis.
+       */
         xGrid: false,
+
+      /** If true and if yTicks is greater than 0, will render horizontal grid
+       *  lines at each tick along the y-axis.
+       */
         yGrid: false,
+
+      /** Used to set the horizontal scaling option. Options include
+       *  "logarithmic" and "linear" (default)
+       */
         scaling: "linear", //"logarithmic"
+
+      /** If true, and if multiple lines are present, will stack the lines on
+       *  top of one another. Values for each line are increased using values
+       *  of the previous lines. The highest line will represent the total
+       *  sum for all the lines.
+       */
         stackValues: false,
+
+      /** If true, will render the cumulative sum for each line.
+       */
+        accumulateValues: false,
+
+      /** If true, will append a label to the end of each line.
+       */
         endTags: false,
+
+      /** If true, will render a tooltip over each point on each line when
+       *  a user hovers over the point. The contents of the tooltip can be
+       *  customized by overriding the getTooltipLabel() method.
+       */
+        showTooltip: false,
+
+      /** Used to animate the lines as they are rendered in the graph.
+       */
         animationSteps: 1500
     };
     var svg, chart, plotArea;
@@ -74,6 +108,38 @@ bluewave.charts.LineChart = function(parent, config) {
 
 
   //**************************************************************************
+  //** getTooltipLabel
+  //**************************************************************************
+  /** Called whenever a tooltip is rendered. Override as needed.
+   */
+    this.getTooltipLabel = function(d, i){
+        return me.getKeyLabel(d.key, d) + "<br/>" + me.getValueLabel(d.value);
+    };
+
+
+  //**************************************************************************
+  //** getKeyLabel
+  //**************************************************************************
+  /** Called whenever a label is rendered
+   */
+    this.getKeyLabel = function(key, data){
+        return key;
+    };
+
+
+  //**************************************************************************
+  //** getValueLabel
+  //**************************************************************************
+  /** Called whenever a label is rendered
+   */
+    this.getValueLabel = function(value, data){
+        var val = bluewave.chart.utils.parseFloat(value);
+        if (isNaN(val)) return value;
+        return round(val, 2);
+    };
+
+
+  //**************************************************************************
   //** getXAxis
   //**************************************************************************
     this.getXAxis = function(){
@@ -87,6 +153,12 @@ bluewave.charts.LineChart = function(parent, config) {
     this.getYAxis = function(){
         return yAxis;
     };
+
+
+  //**************************************************************************
+  //** onClick
+  //**************************************************************************
+    this.onClick = function(line, datasetID, renderedData){};
 
 
   //**************************************************************************
@@ -119,6 +191,12 @@ bluewave.charts.LineChart = function(parent, config) {
   //**************************************************************************
   //** addLine
   //**************************************************************************
+  /** Used to add an individual line to the chart
+   *  @param line An instance of a Line containing style information
+   *  @param data A json array of data points
+   *  @param xAxis Key in the data used for the x-axis
+   *  @param yAxis Key in the data used for the y-axis
+   */
     this.addLine = function(line, data, xAxis, yAxis){
         layers.push({
             line: line,
@@ -132,6 +210,9 @@ bluewave.charts.LineChart = function(parent, config) {
   //**************************************************************************
   //** getLayers
   //**************************************************************************
+  /** Returns an array representing all the lines in the chart. See addLine()
+   *  for more information about each entry in the array.
+   */
     this.getLayers = function(){
         return layers;
     };
@@ -182,6 +263,7 @@ bluewave.charts.LineChart = function(parent, config) {
         else showLabels = data.length>1;
         var stackValues = chartConfig.stackValues===true;
         var accumulateValues = chartConfig.accumulateValues===true;
+        var showTooltip = chartConfig.showTooltip===true;
 
 
       //Generate unique list of x-values across all layers
@@ -673,6 +755,30 @@ bluewave.charts.LineChart = function(parent, config) {
 
 
 
+        var tooltip;
+        if (showTooltip) tooltip = createTooltip();
+
+        var mouseover = function(e, d) {
+            if (tooltip){
+                var label = me.getTooltipLabel(d);
+                tooltip.html(label).show();
+            }
+            //d3.select(this).transition().duration(100).attr("opacity", "0.8");
+        };
+
+        var mousemove = function(e) {
+            if (tooltip) tooltip
+            .style('top', (e.clientY) + "px")
+            .style('left', (e.clientX + 20) + "px");
+        };
+
+        var mouseleave = function() {
+            if (tooltip) tooltip.hide();
+            //d3.select(this).transition().duration(100).attr("opacity", "1");
+        };
+
+
+
       //Draw areas under lines first!
         var fillGroup = plotArea.append("g");
         fillGroup.attr("name", "fill");
@@ -811,6 +917,24 @@ bluewave.charts.LineChart = function(parent, config) {
                     });
             };
 
+            if (tooltip){
+                chartElements[i].point = pointGroup
+                    .selectAll("points")
+                    .data(sumData)
+                    .enter()
+                    .append("circle")
+                    .attr("dataset", i)
+                    .attr("fill", "#ff0000")
+                    .attr("stroke", "none")
+                    .attr("opacity", 0)
+                    .attr("cx", getX )
+                    .attr("cy", getY )
+                    .attr("r", 10)
+                    .on("mouseover", mouseover)
+                    .on("mousemove", mousemove)
+                    .on("mouseleave", mouseleave);
+            }
+
 
           //Render tags
             if (showLabels){
@@ -913,17 +1037,26 @@ bluewave.charts.LineChart = function(parent, config) {
 
         };
 
-      //Draw grid lines if option is checked
+
+      //Draw grid lines
         if (chartConfig.xGrid || chartConfig.yGrid){
-            drawGridlines(plotArea, x, y, axisHeight, axisWidth, chartConfig.xGrid, chartConfig.yGrid);
+
+            var xTicks = false;
+            if (chartConfig.xGrid===true){
+                xTicks = bluewave.chart.utils.parseFloat(chartConfig.xTicks);
+            }
+
+            var yTicks = false;
+            if (chartConfig.yGrid===true){
+                yTicks = bluewave.chart.utils.parseFloat(chartConfig.yTicks);
+            }
+
+            drawGridlines(plotArea, x, y, axisHeight, axisWidth, xTicks, yTicks);
         }
     };
 
 
-  //**************************************************************************
-  //** onClick
-  //**************************************************************************
-    this.onClick = function(line, datasetID, renderedData){};
+
 
 
   //**************************************************************************
@@ -1139,13 +1272,15 @@ bluewave.charts.LineChart = function(parent, config) {
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
-    var checkSVG = bluewave.chart.utils.checkSVG;
+    var round = javaxt.dhtml.utils.round;
 
+    var checkSVG = bluewave.chart.utils.checkSVG;
     var initChart = bluewave.chart.utils.initChart;
     var getType = bluewave.chart.utils.getType;
     var drawAxes = bluewave.chart.utils.drawAxes;
     var drawGridlines = bluewave.chart.utils.drawGridlines;
     var createKeyValueDataset = bluewave.chart.utils.createKeyValueDataset;
+    var createTooltip = bluewave.chart.utils.createTooltip;
 
     init();
 };
