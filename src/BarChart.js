@@ -13,13 +13,48 @@ bluewave.charts.BarChart = function(parent, config) {
 
     var me = this;
     var defaultConfig = {
+
+      /** Used to specify the direction of the bars. Options include "vertical"
+       *  or "horizontal".
+       */
         layout: "vertical",
+
         animationSteps: 1500, //duration in milliseconds
+
+      /** If true, and if multiple datasets are present, will stack the bars on
+       *  top of one another.
+       */
         stackValues: false,
+
+
+      /** Used to round the top corners of the bars, if layout is "vertical"
+       *  or the right corners of the bars if layout is "horizintal".
+       */
         borderRadius: 0,
+
+
+      /** An array of colors used to specify default fill colors. These colors
+       *  are only used by the default getBarColor() method if a "barColor" is
+       *  not specified for a dataset in the chart config (e.g.
+       *  chartConfig["barColor0"]="#ff0000").
+       */
         colors: d3.schemeCategory10,
-        showTooltip: false
+
+
+      /** If true, will render a tooltip over a bar when a user hovers over it.
+       *  The contents of the tooltip can be customized by overriding the
+       *  getTooltipLabel() method.
+       */
+        showTooltip: false,
+
+
+      /** Used to sort the chart data. Valid options include "ascending" or
+       *  "descending". If a valid sort direction is not provided, nothing will
+       *  be sorted (default).
+       */
+        sort: false
     };
+
     var svg, chart, plotArea;
     var x, y;
     var xAxis, yAxis;
@@ -280,13 +315,6 @@ bluewave.charts.BarChart = function(parent, config) {
         //Get sum of tallest bar
         //TODO: axis being set by first dataset - set with largest data
 
-        //Sort bars if option checked
-        var sort = chartConfig.sort;
-        if (sort) {
-            maxData.sort(function (a, b) {
-                return d3[sort](a.value, b.value);
-            });
-        };
 
 
 
@@ -384,8 +412,16 @@ bluewave.charts.BarChart = function(parent, config) {
 
 
 
+      //Sort bars as needed
+        var sort = (config.sort+"").toLowerCase();
+        if (sort==="ascending" || sort==="descending"){
+            maxData.sort(function (a, b) {
+                return d3[sort](a.value, b.value);
+            });
+        }
 
-        //Flip axes if layout is horizontal
+
+      //Flip axes if layout is horizontal
         var leftLabel, bottomLabel;
 
 
@@ -492,8 +528,6 @@ bluewave.charts.BarChart = function(parent, config) {
             var id = (Math.random() + 1).toString(36).substring(7);
             var sumData = arr[i];
 
-            let fillOpacity = parseFloat(chartConfig["fillOpacity" + i]);
-            if (isNaN(fillOpacity) || fillOpacity<0 || fillOpacity>1) fillOpacity = 1;
 
 
           //Define functions used to draw rectangles
@@ -616,7 +650,7 @@ bluewave.charts.BarChart = function(parent, config) {
                         if (chartConfig.layout === "vertical"){
 
                             getWidth = function(d){
-                                if(group){
+                                if (group || dataSets.length>1){
                                     return x.bandwidth ? x.bandwidth()/dataSets.length : getX(d);
                                 }
                                 else{
@@ -633,7 +667,7 @@ bluewave.charts.BarChart = function(parent, config) {
                             _x = function(d) {
                                 var w = getWidth(d);
                                 var left = x.bandwidth ? getX(d) : 0;
-                                return group ? left+(w*i): getX(d);
+                                return (group || dataSets.length>1) ? left+(w*i): getX(d);
                             };
 
                             _y = getY;
@@ -783,13 +817,12 @@ bluewave.charts.BarChart = function(parent, config) {
                 .attr("y", _y)
                 .attr("height", getHeight)
                 .attr("width", getWidth)
-                .attr("opacity", fillOpacity)
                 .attr("clip-path", function(d, n, j){
                     if (r) return "url(#round-corner-" + id + n + ")";
                     else return "";
                 })
                 .attr("barID", function(d, n, j){
-                    return group ? i : 0;
+                    return i; //group ? i : 0;
                 });
 
         }
@@ -808,13 +841,24 @@ bluewave.charts.BarChart = function(parent, config) {
 
 
 
-      //Set bar colors
+      //Set bar colors and opacity
         var bars = barGroup.selectAll("rect");
+        var opacities = {};
         bars.each(function (d, i) {
             let bar = d3.select(this);
             let barID = parseInt(bar.attr("barID"));
             var arr = getBarData(barID, d);
-            bar.attr("fill", me.getBarColor(d, barID, arr));
+            var fillColor = me.getBarColor(d, barID, arr);
+            var fillOpacity = opacities[barID];
+            if (isNaN(fillOpacity)){
+                fillOpacity = bluewave.chart.utils.parseFloat(chartConfig["fillOpacity" + barID]);
+                if (isNaN(fillOpacity) || fillOpacity<0 || fillOpacity>1) fillOpacity = 1;
+                chartConfig["fillOpacity" + barID] = fillOpacity;
+                opacities[barID] = fillOpacity;
+            }
+
+            bar.attr("fill", fillColor);
+            bar.attr("opacity", fillOpacity);
         });
 
 
@@ -901,14 +945,19 @@ bluewave.charts.BarChart = function(parent, config) {
         }
 
         var mouseover = function(e, d) {
+            let bar = d3.select(this);
+
             if (tooltip){
-                let bar = d3.select(this);
                 let barID = parseInt(bar.attr("barID"));
                 var arr = getBarData(barID, d);
                 var label = me.getTooltipLabel(d, barID, arr);
                 tooltip.html(label).show();
             }
-            d3.select(this).transition().duration(100).attr("opacity", "0.8");
+
+            var opacity = parseFloat(bar.attr("opacity"));
+            opacity = opacity-(opacity*0.2);
+
+            bar.transition().duration(100).attr("opacity", opacity);
         };
 
         var mousemove = function(e) {
@@ -919,7 +968,10 @@ bluewave.charts.BarChart = function(parent, config) {
 
         var mouseleave = function() {
             if (tooltip) tooltip.hide();
-            d3.select(this).transition().duration(100).attr("opacity", "1");
+            let bar = d3.select(this);
+            let barID = parseInt(bar.attr("barID"));
+            var fillOpacity = opacities[barID];
+            bar.transition().duration(100).attr("opacity", fillOpacity);
         };
 
 
@@ -964,7 +1016,18 @@ bluewave.charts.BarChart = function(parent, config) {
 
         //Draw grid lines
         if (chartConfig.xGrid || chartConfig.yGrid){
-            drawGridlines(plotArea, x, y, axisHeight, axisWidth, chartConfig.xGrid, chartConfig.yGrid);
+
+            var xTicks = false;
+            if (chartConfig.xGrid===true){
+                xTicks = bluewave.chart.utils.parseFloat(chartConfig.xTicks);
+            }
+
+            var yTicks = false;
+            if (chartConfig.yGrid===true){
+                yTicks = bluewave.chart.utils.parseFloat(chartConfig.yTicks);
+            }
+
+            drawGridlines(plotArea, x, y, axisHeight, axisWidth, xTicks, yTicks);
         }
 
         addMouseEvents();
