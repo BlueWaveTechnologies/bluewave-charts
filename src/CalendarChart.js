@@ -14,14 +14,50 @@ bluewave.charts.CalendarChart = function(parent, config) {
 
     var me = this;
     var defaultConfig = {
+
+      /** If true, will render labels for each row.
+       */
         dayLabel: true,
+
+      /** If true, will render a year label for each calendar.
+       */
         yearLabel: true,
+
         date: "date",
         value: "value",
-        weekday: "sunday", // either: weekday, sunday, or monday
-        colors: ["#fff","#ebf5dc","#cbe9a5","#2a671a"], //green colors
+
+      /** Used to specify the start of the week. Options include "weekday",
+       *  "sunday", or "monday".
+       */
+        weekday: "sunday",
+
+
+      /** An array of colors used to specify fill colors. Typically lighter
+       *  colors represent smaller values and darker colors represent larger
+       *  values.
+       */
+        colors: ["#fff","#ebf5dc","#cbe9a5","#2a671a"],
+
+
+      /** When coloring cells in the calendar, values are grouped into classes
+       *  using Jenks natural breaks. The numClasses config is used to specify
+       *  the maximum number of classes (i.e. max number of colors)
+       */
+        numClasses: 10,
+
+
+      /** Color for the line used to separate months.
+       */
+        boundaryColor: "#fff",
+
+
+      /** If true, will render a tooltip over each cell in the calendar when
+       *  a user hovers over the cell. The contents of the tooltip can be
+       *  customized by overriding the getTooltipLabel() method.
+       */
         showTooltip: false
     };
+
     var svg, chart, calendarArea;
 
 
@@ -210,8 +246,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
 
 
       //Create color function using natural breaks
-        var numClasses = 10;
-        var breaks = getNaturalBreaks(values, numClasses);
+        var breaks = getNaturalBreaks(values, config.numClasses);
         var colors = getColorRange(breaks.length+1, config.colors);
         var getColor = function(value){
             for (var i=0; i<breaks.length-1; i++){
@@ -367,7 +402,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
       //Add thick line to seperate months in the grid
         monthGroup.filter((d, i) => i).append("path")
             .attr("fill", "none")
-            .attr("stroke", "#fff")
+            .attr("stroke", config.boundaryColor)
             .attr("stroke-width", 3)
             .attr("d", function(date) {
                 const d = Math.max(0, Math.min(weekDays, countDay(date.getUTCDay())));
