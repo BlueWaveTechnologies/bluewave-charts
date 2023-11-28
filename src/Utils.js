@@ -1042,11 +1042,8 @@ bluewave.chart.utils = {
       //letters, and currency symbols. If there's anything leftover, then we
       //we have illegal characters in the string
         var t = n.replace(/[-+,.a-zA-Z0-9() ]+/g, "");
-        t = t.replace(/[\$\xA2-\xA5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0-\u20BD\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6]/,"");
+        t = t.replace(bluewave.chart.utils.getCurrencyRegEx(),"");
         if (t.length>0) return false;
-
-
-
 
 
       //Loop through words (e.g. "$654.29 USD" is valid)
@@ -1093,26 +1090,53 @@ bluewave.chart.utils = {
 
 
         return false;
-
     },
 
 
   //**************************************************************************
   //** isDate
   //**************************************************************************
-  /** Return true if a given object can be parsed into a date
+  /** Return true if a given object can be parsed into a date. Under the hood,
+   *  this method uses Date.parse(). However, we try to avoid passing numbers
+   *  (e.g. "3", "1.2") and currencies ("$37.01") to Date.parse() to reduce
+   *  false positives.
    */
     isDate: function(d) {
 
-      //Don't pass numbers to Date.parse (e.g. "3", "1.2")
-        if (typeof d === "string" || typeof d === "number"){
-            var n = (d+"").replace(/[^-+0-9,.]+/g,"");
-            if (d===n){
-                return false;
-            }
-        }
+      //Check if the given object is a date
+        if (d instanceof Date) return true;
 
-        return !isNaN(Date.parse(d));
+
+      //Check if the given object is a number
+        if (bluewave.chart.utils.isNumber(d)) return false;
+
+
+      //Convert the given object to a string
+        if (typeof d !== "string") d = d+"";
+        d = d.trim();
+
+
+      //Check if the string starts with a + or -
+        if (d.match(/^[-+]/)) return false;
+
+
+      //Check if the string contains any currency symbols
+        if (d.match(bluewave.chart.utils.getCurrencyRegEx())) return false;
+
+
+      //If we're still here, parse the date
+        d = Date.parse(d);
+        return !isNaN(d) && d!==0;
+    },
+
+
+  //**************************************************************************
+  //** getCurrencyRegEx
+  //**************************************************************************
+  /** Returns a RegEx containing common currency symbols
+   */
+    getCurrencyRegEx: function(){
+        return /[\$\xA2-\xA5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0-\u20BD\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6]/;
     },
 
 
