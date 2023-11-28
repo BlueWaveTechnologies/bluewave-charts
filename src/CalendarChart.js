@@ -18,12 +18,11 @@ bluewave.charts.CalendarChart = function(parent, config) {
         yearLabel: true,
         date: "date",
         value: "value",
-        weekday: "monday", // either: weekday, sunday, or monday
-        cellSize: 17, // width and height of an individual day, in pixels
+        weekday: "sunday", // either: weekday, sunday, or monday
         colors: ["#fff","#ebf5dc","#cbe9a5","#2a671a"], //green colors
         showTooltip: false
     };
-    var svg, calendarArea;
+    var svg, chart, calendarArea;
 
 
 
@@ -36,7 +35,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
 
         initChart(parent, function(s, g){
             svg = s;
-            calendarArea = g;
+            chart = g;
         });
 
     };
@@ -95,7 +94,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
   //** clear
   //**************************************************************************
     this.clear = function(){
-        if (calendarArea) calendarArea.selectAll("*").remove();
+        if (chart) chart.selectAll("*").remove();
     };
 
 
@@ -135,10 +134,26 @@ bluewave.charts.CalendarChart = function(parent, config) {
         me.clear();
         var chartConfig = config;
 
+
+
+        var rect = javaxt.dhtml.utils.getRect(svg.node());
+        var width = rect.width;
+        var height = rect.height;
+        calendarArea = chart.append("g");
+        calendarArea
+            .attr("width", width)
+            .attr("height", height);
+
+
+
         var
-         cellSize = config.cellSize,
-         weekday = config.weekday,
-         formatDay = i => "SMTWTFS"[i]; // given a day number in [0, 6], the day-of-week label
+        weekday = config.weekday,
+        formatDay = i => "SMTWTFS"[i]; // given a day number in [0, 6], the day-of-week label
+
+        const countDay = weekday === "sunday" ? i => i : i => (i + 6) % 7;
+        const timeWeek = weekday === "sunday" ? d3.utcSunday : d3.utcMonday;
+        const weekDays = weekday === "weekday" ? 5 : 7;
+
 
 
       //Update date and value fields in the data
@@ -160,6 +175,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
         var dates = [];
         var values = [];
         var years = {};
+        var weeks = {};
         data.forEach((d)=>{
             var date = d[config.date];
             var value = d[config.value];
@@ -168,6 +184,9 @@ bluewave.charts.CalendarChart = function(parent, config) {
 
             var year = date.getUTCFullYear();
             years[year+""] = year;
+
+            var week = timeWeek.count(d3.utcYear(date), date);
+            weeks[week+""] = parseInt(week);
         });
         years = Object.values(years);
         years.sort(function(a,b){
@@ -175,11 +194,19 @@ bluewave.charts.CalendarChart = function(parent, config) {
         });
 
 
+        var numWeeks = 0;
+        var range = d3.extent(Object.values(weeks));
+        for (var i=0; i<=range[1]; i++) numWeeks++;
 
-        const countDay = weekday === "sunday" ? i => i : i => (i + 6) % 7;
-        const timeWeek = weekday === "sunday" ? d3.utcSunday : d3.utcMonday;
-        const weekDays = weekday === "weekday" ? 5 : 7;
-        const height = cellSize * (weekDays + 2);
+
+      //Compute cellSize and xOffset
+        var xOffset = 0;
+        var maxWidth = width;
+        if (chartConfig.dayLabel) xOffset = 15; //width of day labels?
+        if (chartConfig.yearLabel) xOffset = Math.max(40, xOffset);
+        var cellSize = Math.floor((maxWidth-xOffset)/numWeeks);
+
+
 
 
       //Create color function using natural breaks
@@ -233,10 +260,11 @@ bluewave.charts.CalendarChart = function(parent, config) {
 
 
       //Create groups for every year
+        const groupHeight = cellSize * (weekDays + 2);
         var yearGroup = calendarArea.selectAll("*")
           .data(years)
           .join("g")
-            .attr("transform", (d, i) => `translate(40.5,${height * i + cellSize * 1.5})`);
+            .attr("transform", (d, i) => `translate(${xOffset-0.5},${groupHeight * i + cellSize * 1.5})`);
 
       //Add year label if option is checked
         if (chartConfig.yearLabel){
@@ -276,26 +304,9 @@ bluewave.charts.CalendarChart = function(parent, config) {
                 })
                 .attr("dy", "0.31em")
                 .text(function(d){
-                    var dayOfWeek = d.day;
-                    var year = d.year;
-
-                    var hasData = false;
-                    dates.every(function(date){
-                        if (date.getUTCFullYear()===year){
-                            var day = date.getUTCDay();
-                            if (day===dayOfWeek){
-                                hasData = true;
-                                return false;
-                            }
-                        }
-                        return true;
-                    });
-
-                    if (hasData || (dayOfWeek>0 && dayOfWeek<6)){
-                        return formatDay(dayOfWeek);
-                    }
+                    return formatDay(d.day);
                 });
-        };
+        }
 
 
       //Create table and cells
