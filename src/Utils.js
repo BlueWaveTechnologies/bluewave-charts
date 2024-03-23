@@ -770,7 +770,8 @@ bluewave.chart.utils = {
 
 
 
-        } else if (type === 'string') {
+        }
+        else if (type === 'string') {
 
             let numExtraTicks = Math.ceil(domain.length * scalingFactor);
             let spaceString = "";
@@ -789,7 +790,8 @@ bluewave.chart.utils = {
                     .padding(0.2);
 
 
-        } else { //Number
+        }
+        else { //Number
 
             let numDomain = [domain[0], domain[1]*(scalingFactor + 1)]
 
@@ -824,7 +826,7 @@ bluewave.chart.utils = {
         }
 
         if (yAxis){
-            yAxis.remove()
+            yAxis.remove();
             yAxis = svg
             .append("g")
             .call(
@@ -862,6 +864,12 @@ bluewave.chart.utils = {
             var noval = 0;
             var other = 0;
             value.forEach(function(val){
+
+                if (val===null || typeof val === 'undefined'){
+                    noval++;
+                    return;
+                }
+
                 var dataType = getType(val);
                 switch (dataType) {
                     case "string":
@@ -890,7 +898,7 @@ bluewave.chart.utils = {
             if (dates===len || dates+noval===len) return "date";
             if (numbers===len || numbers+noval===len) return "number";
             if (currencies===len || currencies+noval===len || currencies+numbers+noval===len) return "currency";
-            if (strings===len) return "string";
+            if (strings===len || strings+noval===len) return "string";
             return null;
         }
         else {
