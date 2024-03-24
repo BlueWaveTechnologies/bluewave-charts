@@ -123,7 +123,14 @@ bluewave.charts.LineChart = function(parent, config) {
   /** Called whenever a label is rendered
    */
     this.getKeyLabel = function(key, data){
-        return key;
+        var type = getType(key);
+        if (type=="date"){
+            if (!(key instanceof Date)) key = new Date(key);
+            return (key.getMonth()+1) + "/" + key.getDate() + "/" + key.getFullYear();
+        }
+        else{
+            return key;
+        }
     };
 
 
@@ -267,25 +274,19 @@ bluewave.charts.LineChart = function(parent, config) {
 
 
       //Generate unique list of x-values across all layers
-        var xKeys = [];
+        var xKeys = {};
         layers.forEach(function(layer){
             if (!layer.data) return;
             layer.data.forEach(function(d){
                 var xKey = d[layer.xAxis];
-                var addKey = true;
-                for (var i=0; i<xKeys.length; i++){
-                    if (xKeys[i]==xKey){
-                        addKey = false;
-                        break;
-                    }
-                }
-                if (addKey) xKeys.push(xKey);
+                xKeys[xKey] = xKey;
             });
         });
+        xKeys = Object.values(xKeys);
 
 
 
-      //Create dataset to render
+      //Create datasets to render
         var arr = [];
         for (let i=0; i<layers.length; i++){
             if (!layers[i].line) continue;
@@ -299,12 +300,50 @@ bluewave.charts.LineChart = function(parent, config) {
             if (!xKey || !yKey) continue;
 
 
-          //Create data for the pie chart
+          //Create key/value dataset
             var sumData = createKeyValueDataset(layers[i].data, xKey, yKey);
 
 
           //Get lineConfig
             var lineConfig = layers[i].line.getConfig();
+
+
+            arr.push( {lineConfig: lineConfig, sumData: sumData} );
+        };
+
+
+      //Sort keys
+        sortKeys(xKeys, arr);
+
+
+      //Sort data
+        arr.forEach(function(d){
+            var sumData = d.sumData;
+            var lineConfig = d.lineConfig;
+
+
+          //Generate new sorted dataset
+            var newData = [];
+            var skipKey = {};
+            xKeys.forEach(function(key){
+                if (skipKey[key]) return;
+
+                for (var i=0; i<sumData.length; i++){
+                    if (sumData[i].key==key){ //don't use ===
+                        newData.push(sumData[i]);
+                        break;
+                    }
+                }
+
+                skipKey[key] = true;
+            });
+
+
+          //Update sumData with new data
+            for (var i=0; i<newData.length; i++){
+                d.sumData[i] = newData[i];
+            }
+            var sumData = d.sumData;
 
 
           //Accumulate y-values as needed
@@ -326,13 +365,11 @@ bluewave.charts.LineChart = function(parent, config) {
                 applySmoothing(smoothingType, smoothingValue, sumData);
             }
 
-
-            arr.push( {lineConfig: lineConfig, sumData: sumData} );
-        };
+        });
 
 
 
-      //Stack values
+      //Stack values as needed
         if (stackValues){
 
 
@@ -370,104 +407,8 @@ bluewave.charts.LineChart = function(parent, config) {
             }
 
 
-
-          //Analyze all the keys and get key type (e.g. number, string, date)
-            var xType = getType(xKeys);
-
-
-          //Analyze keys in each dataset and determine sort direction
-            var xSorts = {};
-            arr.forEach(function(d, i){
-                var sumData = d.sumData;
-
-                var sortDir = "none";
-                var asc = 0;
-                var desc = 0;
-                var unk = 0;
-
-
-                if (sumData.length<2){
-                    //No sort if there are only 1 or 0 elements
-                }
-                else{
-                    for (var j=0; j<sumData.length-1; j++){
-
-                        var currKey = sumData[j].key;
-                        var nextKey = sumData[j+1].key;
-
-                        if (xType=="date"){
-                            currKey = new Date(currKey).getTime();
-                            nextKey = new Date(nextKey).getTime();
-                            if (nextKey>=currKey) asc++;
-                            if (nextKey<=currKey) desc++;
-                        }
-                        else if (xType=="number" || xType=="currency"){
-                            currKey = bluewave.chart.utils.parseFloat(currKey);
-                            nextKey = bluewave.chart.utils.parseFloat(nextKey);
-                            if (nextKey>currKey) asc++;
-                            if (nextKey<currKey) desc++;
-                            if (nextKey==currKey) unk++;
-                        }
-                        else {
-                            var x = currKey.localeCompare(nextKey);
-                            if (x<0) asc++;
-                            if (x>0) desc++;
-                            if (x==0) unk++;
-                        }
-                    }
-
-                    //console.log("asc", asc+unk, sumData.length-1);
-                    //console.log("desc", desc+unk, sumData.length-1);
-                    if (asc+unk==sumData.length-1) sortDir = "asc";
-                    if (desc+unk==sumData.length-1) sortDir = "desc";
-                    //console.log(d.lineConfig.label, xType, sortDir);
-
-                    var sort = xSorts[sortDir];
-                    if (!sort){
-                        sort = [];
-                        xSorts[sortDir] = sort;
-                    }
-                    sort.push(i);
-                }
-
-            });
-
-
-            var sortKeys = Object.keys(xSorts);
-            var xSort = sortKeys.length==1 ? sortKeys[0] : null;
-
-
-          //Sort xKeys
-            if (xSort){
-                xKeys.sort(function(a, b){
-                    if (xType=="number" || xType=="currency"){
-                        if (xSort=="asc"){
-                            return bluewave.chart.utils.parseFloat(a)-bluewave.chart.utils.parseFloat(b);
-                        }
-                        else{
-                            return bluewave.chart.utils.parseFloat(b)-bluewave.chart.utils.parseFloat(a);
-                        }
-                    }
-                    else if (xType=='date'){
-                        if (xSort=="asc"){
-                            return (new Date(a).getTime())-(new Date(b).getTime());
-                        }
-                        else{
-                            return (new Date(b).getTime())-(new Date(a).getTime());
-                        }
-                    }
-                    else{
-                        if (xSort=="asc"){
-                            return a.localeCompare(b);
-                        }
-                        else{
-                            return b.localeCompare(a);
-                        }
-                    }
-                });
-
-            }
-
+          //Sort keys
+            sortKeys(xKeys, arr);
 
 
           //Fill in missing values
@@ -782,6 +723,7 @@ bluewave.charts.LineChart = function(parent, config) {
       //Draw areas under lines first!
         var fillGroup = plotArea.append("g");
         fillGroup.attr("name", "fill");
+        var fillClass = "fill-gradient-" + (Math.random() + 1).toString(36).substring(7);
         for (let i=arr.length-1; i>-1; i--){
 
             //if(stack) break;
@@ -811,7 +753,7 @@ bluewave.charts.LineChart = function(parent, config) {
 
 
           //Add color gradient to area
-            let className = "fill-gradient-" + i;
+            let className = fillClass + "-" + i;
             addColorGradient(lineColor, startOpacity, endOpacity, className, fillGroup);
 
 
@@ -1056,7 +998,106 @@ bluewave.charts.LineChart = function(parent, config) {
     };
 
 
+  //**************************************************************************
+  //** sortKeys
+  //**************************************************************************
+    var sortKeys = function(xKeys, arr){
 
+      //Analyze all the keys and get key type (e.g. number, string, date)
+        var xType = getType(xKeys);
+
+
+      //Analyze keys in each dataset and determine sort direction
+        var xSorts = {};
+        arr.forEach(function(d, i){
+            var sumData = d.sumData;
+
+            var sortDir = "none";
+            var asc = 0;
+            var desc = 0;
+            var unk = 0;
+
+
+            if (sumData.length<2){
+                //No sort if there are only 1 or 0 elements
+            }
+            else{
+                for (var j=0; j<sumData.length-1; j++){
+
+                    var currKey = sumData[j].key;
+                    var nextKey = sumData[j+1].key;
+
+                    if (xType=="date"){
+                        currKey = new Date(currKey).getTime();
+                        nextKey = new Date(nextKey).getTime();
+                        if (nextKey>=currKey) asc++;
+                        if (nextKey<=currKey) desc++;
+                    }
+                    else if (xType=="number" || xType=="currency"){
+                        currKey = bluewave.chart.utils.parseFloat(currKey);
+                        nextKey = bluewave.chart.utils.parseFloat(nextKey);
+                        if (nextKey>currKey) asc++;
+                        if (nextKey<currKey) desc++;
+                        if (nextKey==currKey) unk++;
+                    }
+                    else {
+                        var x = currKey.localeCompare(nextKey);
+                        if (x<0) asc++;
+                        if (x>0) desc++;
+                        if (x==0) unk++;
+                    }
+                }
+
+                //console.log("asc", asc+unk, sumData.length-1);
+                //console.log("desc", desc+unk, sumData.length-1);
+                if (asc+unk==sumData.length-1) sortDir = "asc";
+                if (desc+unk==sumData.length-1) sortDir = "desc";
+                //console.log(d.lineConfig.label, xType, sortDir);
+
+                var sort = xSorts[sortDir];
+                if (!sort){
+                    sort = [];
+                    xSorts[sortDir] = sort;
+                }
+                sort.push(i);
+            }
+
+        });
+
+
+        var sortKeys = Object.keys(xSorts);
+        var xSort = sortKeys.length==1 ? sortKeys[0] : null;
+        if (xType=='date') xSort = "asc";
+
+
+      //Sort keys
+        if (xSort){
+            xKeys.sort(function(a, b){
+                if (xType=="number" || xType=="currency"){
+                    if (xSort=="asc"){
+                        return bluewave.chart.utils.parseFloat(a)-bluewave.chart.utils.parseFloat(b);
+                    }
+                    else{
+                        return bluewave.chart.utils.parseFloat(b)-bluewave.chart.utils.parseFloat(a);
+                    }
+                }
+                else if (xType=="date"){
+                    if (!(a instanceof Date)) a = new Date(a);
+                    if (!(b instanceof Date)) b = new Date(b);
+                    return a.getTime()-b.getTime(); //date are always ascending!
+                }
+                else{
+                    if (xSort=="asc"){
+                        return a.localeCompare(b);
+                    }
+                    else{
+                        return b.localeCompare(a);
+                    }
+                }
+            });
+
+        }
+    };
 
 
   //**************************************************************************
