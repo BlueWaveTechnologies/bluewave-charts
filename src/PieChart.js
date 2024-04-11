@@ -415,7 +415,7 @@ bluewave.charts.PieChart = function(parent, config) {
           //Create donut used to define the start of the lines
             var firstArc = d3.arc()
             .innerRadius(innerRadius)
-            .outerRadius(innerRadius + (radius - innerRadius) * 90/50);
+            .outerRadius(innerRadius + (radius - innerRadius) * 90/50); //line starts slightly inside the pie
 
 
           //Create donut used to define the second point on the lines. If
@@ -425,6 +425,16 @@ bluewave.charts.PieChart = function(parent, config) {
             var secondArc = d3.arc()
             .innerRadius(radius)
             .outerRadius(radius+((labelEnd-radius)*2)); //side thickness 2x larger than the labelOffset
+
+
+
+            var labelPadding = parseFloat(config.labelPadding+"");
+            if (isNaN(labelPadding)) labelPadding = 5;
+
+            var thirdArc = d3.arc()
+            .innerRadius(radius)
+            .outerRadius(radius+((labelEnd-radius)*2)+labelPadding);
+
 
 
           //Debugging code used to render labelOffset
@@ -459,7 +469,7 @@ bluewave.charts.PieChart = function(parent, config) {
             .attr("opacity", "0")
             .attr("stroke", config.lineColor)
             .style("fill", "none")
-            .attr("stroke-width", 1)
+            .attr("stroke-width", 0.7)
             .attr("points", function(d) {
 
               //Create line
@@ -473,17 +483,29 @@ bluewave.charts.PieChart = function(parent, config) {
                 var isRight = (midangle < Math.PI ? true : false);
 
 
-              //Add 3rd coordinate as needed
+
+              //Update line as needed and update endPoints array for label offset
                 if (extendLines){
-                    line.push([
-                        labelEnd * (isRight ? 1 : -1), //x coordinate
-                        b[1] //y coordinate
-                    ]);
+
+                  //Add 3rd coordinate
+                    var x = labelEnd * (isRight ? 1 : -1); //x coordinate
+                    var y = b[1]; //y coordinate
+                    line.push([x,y]);
+
+
+                  //Set endpoint
+                    endPoints.push([x + (isRight ? labelPadding : -labelPadding), y]);
+
+                }
+                else{
+
+                  //Compute endpoint using thirdArc
+                    var c = thirdArc.centroid(d);
+                    var l = [a, c];
+                    endPoints.push(l[l.length-1]);
                 }
 
 
-              //Update endPoints
-                endPoints.push(line[line.length-1]);
 
                 return line;
             });
@@ -498,6 +520,7 @@ bluewave.charts.PieChart = function(parent, config) {
             .data(pieData)
             .enter()
             .append("text")
+            .attr("class", "tick")
             .text(function(d) {
                 return me.getKeyLabel(d.data.key, d.data);
             })
@@ -545,12 +568,48 @@ bluewave.charts.PieChart = function(parent, config) {
                 }
 
 
+              //Get text height before scaling
+                var orgTextHeight = 0;
+                labelGroup.selectAll("text").each(function(d, i) {
+                    if (i===0){
+                        var box = javaxt.dhtml.utils.getRect(this);
+                        orgTextHeight = box.height;
+                    }
+                });
+
+
               //Apply scaling and position
                 pieChart
                   .attr("transform",
                     "translate(" + x + "," + y + ") " +
                     "scale(" + scale + ")"
                 );
+
+
+
+              //Get text height after scaling
+                var currTextHeight = 0;
+                labelGroup.selectAll("text").each(function(d, i) {
+                    if (i===0){
+                        var box = javaxt.dhtml.utils.getRect(this);
+                        currTextHeight = box.height;
+                    }
+                });
+
+
+
+
+                if (currTextHeight<orgTextHeight){
+                    var labelScale = orgTextHeight/currTextHeight;
+                    labelGroup.selectAll("text").each(function(d, i) {
+                        console.log(this);
+                        var translate = this.getAttribute('transform');
+                        this.setAttribute('transform', translate + " scale(" + labelScale + ")");
+                        //console.log(this.getAttribute('transform'));
+                    });
+                }
+
+
 
 
 
