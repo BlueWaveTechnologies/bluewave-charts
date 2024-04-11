@@ -79,7 +79,12 @@ p {
     font-weight: bold;
 }
 
-.tick {
+
+/**************************************************************************/
+/** Labels
+/**************************************************************************/
+
+.label {
     font-family: 'Segoe UI Variable Small'; /* for windows */
     font-size: 10px;
     color: #555;
@@ -90,6 +95,20 @@ p {
     -khtml-user-select: none;
     user-select: none;
 }
+
+
+.treemap .label {
+    font-size: 12px;
+}
+
+.treemap .group.label {
+    font-size: 14px;
+}
+
+.treemap .value.label {
+    font-size: 10px;
+}
+
 
 /**************************************************************************/
 /** tooltip
