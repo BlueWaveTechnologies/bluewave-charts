@@ -14,13 +14,13 @@ bluewave.charts.LineChart = function(parent, config) {
     var me = this;
     var defaultConfig = {
 
-      /** If true and if xTicks is greater than 0, will render vertical grid
-       *  lines at each tick along the x-axis.
+      /** If true, will render vertical grid lines at each tick along the
+       *  x-axis.
        */
         xGrid: false,
 
-      /** If true and if yTicks is greater than 0, will render horizontal grid
-       *  lines at each tick along the y-axis.
+      /** If true, will render horizontal grid lines at each tick along the
+       *  y-axis.
        */
         yGrid: false,
 
@@ -986,11 +986,13 @@ bluewave.charts.LineChart = function(parent, config) {
             var xTicks = false;
             if (chartConfig.xGrid===true){
                 xTicks = bluewave.chart.utils.parseFloat(chartConfig.xTicks);
+                if (isNaN(xTicks)) xTicks = true;
             }
 
             var yTicks = false;
             if (chartConfig.yGrid===true){
                 yTicks = bluewave.chart.utils.parseFloat(chartConfig.yTicks);
+                if (isNaN(yTicks)) yTicks = true;
             }
 
             drawGridlines(plotArea, x, y, axisHeight, axisWidth, xTicks, yTicks);
