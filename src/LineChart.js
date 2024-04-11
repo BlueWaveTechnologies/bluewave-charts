@@ -52,7 +52,15 @@ bluewave.charts.LineChart = function(parent, config) {
 
       /** Used to animate the lines as they are rendered in the graph.
        */
-        animationSteps: 1500
+        animationSteps: 1500,
+
+
+      /** Padding between axis labels. This value, plus the width of individual
+       *  axis labels is used to determine whether labels will be rotated along
+       *  the x-axis.
+       */
+        labelPadding: 3
+        
     };
     var svg, chart, plotArea;
     var x, y;

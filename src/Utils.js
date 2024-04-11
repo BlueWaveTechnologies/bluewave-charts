@@ -407,9 +407,9 @@ bluewave.chart.utils = {
         var foundIntersection = function(boxes){
             var foundIntersection = false;
 
-            for (var i = 0; i < boxes.length; i++) {
+            for (var i=0; i<boxes.length; i++) {
                 var box = boxes[i];
-                for (var j = 0; j < boxes.length; j++) {
+                for (var j=0; j<boxes.length; j++) {
                     if (j === i) continue;
                     var b = boxes[j];
                     if (javaxt.dhtml.utils.intersects(box, b)) {
@@ -461,7 +461,9 @@ bluewave.chart.utils = {
 
 
           //Rotate x-axis labels as needed
-            var xBoxes = getBoxes(xAxis, 0);
+            var padding = parseFloat(chartConfig.labelPadding+"");
+            if (isNaN(padding)) padding = 3;
+            var xBoxes = getBoxes(xAxis, padding);
             var xLabelsIntersect = foundIntersection(xBoxes);
             if (xLabelsIntersect){
 
