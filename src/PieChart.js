@@ -520,7 +520,7 @@ bluewave.charts.PieChart = function(parent, config) {
             .data(pieData)
             .enter()
             .append("text")
-            .attr("class", "tick")
+            .attr("class", "label")
             .text(function(d) {
                 return me.getKeyLabel(d.data.key, d.data);
             })

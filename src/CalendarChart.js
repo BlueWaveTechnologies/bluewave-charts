@@ -319,7 +319,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
 
           //Add day of week abbreviation on the left side of each group
             yearGroup.append("g")
-            .attr("class", "tick")
+            .attr("class", "day label")
             .attr("text-anchor", "middle")
             .selectAll("text")
             .data(function(year){
@@ -416,7 +416,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
       //Add month labels
         var renderedMonths = {};
         monthGroup.append("text")
-            .attr("class", "tick")
+            .attr("class", "month label")
             .attr("x", d => timeWeek.count(d3.utcYear(d), timeWeek.ceil(d)) * cellSize + 2)
             .attr("y", -5)
             .text(function(date){

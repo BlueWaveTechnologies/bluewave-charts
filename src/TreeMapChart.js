@@ -469,6 +469,8 @@ bluewave.charts.TreeMapChart = function(parent, config) {
             text.remove();
         }
 
+        plotArea.attr("class", "treemap");
+
 
 
       //Compute treemap
@@ -547,6 +549,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
                 .attr("x", box.x+2 )
                 .attr("y", box.y )
                 .attr("text-anchor", "start")
+                .attr("class", "label")
                 .text(label);
 
 
@@ -605,6 +608,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
                 .attr("x", box.x+2 )
                 .attr("y", box.y )
                 .attr("text-anchor", "start")
+                .attr("class", "value label")
                 .text(label);
 
 
@@ -645,6 +649,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
             .data(data.descendants)
             .enter()
             .append("text")
+            .attr("class", "group label")
             .attr("x", (d) => d.x0+1)
             .attr("y", (d) => d.y0+groupPadding-labelPadding)
             .text((d) => d.data.name )
@@ -706,7 +711,8 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
       //Create container for the treemap
         var treemapContainer = plotArea.append("g")
-        .attr("transform", "translate("+center+")");
+        .attr("transform", "translate("+center+")")
+        .attr("class", "voronoi treemap");
 
 
       //Create polygon for the perimeter circle
@@ -782,6 +788,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
                 .attr("y", centroid[1] )
                 .attr("text-anchor", "middle")
                 .attr("dominant-baseline", "middle")
+                .attr("class", "label")
                 .text(label);
 
 
@@ -820,6 +827,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
                 .attr("y", yOffset )
                 .attr("text-anchor", "middle")
                 .attr("dominant-baseline", "middle")
+                .attr("class", "value label")
                 .text(label);
 
 

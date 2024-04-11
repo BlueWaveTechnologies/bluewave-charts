@@ -129,7 +129,19 @@ bluewave.chart.utils = {
    */
     drawGridlines: function(svg, xScale, yScale, height, width, xGrid, yGrid){
 
+        var gridLines = [];
+
+
+      //Render vertical grid
         if (xGrid===true || !isNaN(xGrid)){
+
+
+            var g = svg.append("g")
+            .attr("class", "vertical grid")
+            .attr("transform", "translate(0," + height + ")");
+            gridLines.push(g);
+
+
 
             var fn;
             if (xGrid===true){
@@ -144,16 +156,19 @@ bluewave.chart.utils = {
                 .tickFormat("");
             }
 
-
-            svg.append("g")
-            .attr("class", "grid")
-            .attr("transform", "translate(0," + height + ")")
-            .call(fn);
+            g.call(fn);
         }
 
 
 
+      //Render horizontal grid
         if (yGrid===true || !isNaN(yGrid)){
+
+
+            var g = svg.append("g")
+            .attr("class", "horizontal grid");
+            gridLines.push(g);
+
 
             var fn;
             if (yGrid===true){
@@ -168,11 +183,21 @@ bluewave.chart.utils = {
                 .tickFormat("");
             }
 
-
-            svg.append("g")
-            .attr("class", "grid")
-            .call(fn);
+            g.call(fn);
         }
+
+
+
+      //DOM cleanup
+        gridLines.forEach((axis)=>{
+            axis.node().removeAttribute("font-size");
+            axis.node().removeAttribute("font-family");
+            axis.selectAll("g").each(function(d, i) {
+                this.removeAttribute("class");
+                this.removeAttribute("opacity");
+            });
+        });
+
     },
 
 
@@ -580,6 +605,23 @@ bluewave.chart.utils = {
                 });
             }
         }
+
+
+        [xAxis, yAxis].forEach((axis)=>{
+            axis.node().setAttribute("class", "axis");
+            axis.node().removeAttribute("font-size");
+            axis.node().removeAttribute("font-family");
+            axis.selectAll("g").each(function(d, i) {
+                this.removeAttribute("opacity");
+                this.removeAttribute("class");
+            });
+            axis.selectAll("text").each(function(d, i) {
+                this.setAttribute("class", "label");
+            });
+            axis.selectAll("line").each(function(d, i) {
+                this.setAttribute("class", "tick");
+            });
+        });
 
 
       //Calculate margins required to fit the labels
