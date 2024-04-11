@@ -117,29 +117,61 @@ bluewave.chart.utils = {
   //**************************************************************************
   //** drawGridlines
   //**************************************************************************
+  /** Used to draw horizontal and/or vertical gridlines on a chart
+   *
+   *  @param xGrid If true or a number, renders vertical grid lines. If a
+   *  number is given, renders that number of grid lines. If true, the number
+   *  of grid lines is calculated automatically.
+   *
+   *  @param yGrid If true or a number, renders horizontal grid lines. If a
+   *  number is given, renders that number of grid lines. If true, the number
+   *  of grid lines is calculated automatically.
+   */
     drawGridlines: function(svg, xScale, yScale, height, width, xGrid, yGrid){
 
-        if (xGrid){
+        if (xGrid===true || !isNaN(xGrid)){
+
+            var fn;
+            if (xGrid===true){
+                fn = d3.axisBottom(xScale)
+                .tickSize(-height)
+                .tickFormat("");
+            }
+            else{
+                fn = d3.axisBottom(xScale)
+                .ticks(xGrid)
+                .tickSize(-height)
+                .tickFormat("");
+            }
+
+
             svg.append("g")
             .attr("class", "grid")
             .attr("transform", "translate(0," + height + ")")
-            .call(
-                d3.axisBottom(xScale)
-                .ticks(xGrid)
-                .tickSize(-height)
-                .tickFormat("")
-            );
+            .call(fn);
         }
 
-        if (yGrid){
-            svg.append("g")
-            .attr("class", "grid")
-            .call(
-                d3.axisLeft(yScale)
+
+
+        if (yGrid===true || !isNaN(yGrid)){
+
+            var fn;
+            if (yGrid===true){
+                fn = d3.axisLeft(yScale)
+                .tickSize(-width)
+                .tickFormat("");
+            }
+            else{
+                fn = d3.axisLeft(yScale)
                 .ticks(yGrid)
                 .tickSize(-width)
-                .tickFormat("")
-            );
+                .tickFormat("");
+            }
+
+
+            svg.append("g")
+            .attr("class", "grid")
+            .call(fn);
         }
     },
 
@@ -320,10 +352,12 @@ bluewave.chart.utils = {
                         days = Object.keys(days);
                     }
 
+                    var trimZeros = true;
                     if (years.length>1){
                         if (days.length==1){
-                            var format = d3.timeFormat("%m/%y");
+                            var format = d3.timeFormat("%Y"); //"%m/%y"
                             label = format(value);
+                            trimZeros = false;
                         }
                     }
                     else{
@@ -333,8 +367,11 @@ bluewave.chart.utils = {
                         }
                     }
 
-                    if (label.indexOf("0")===0) label = label.substring(1);
-                    label = label.replaceAll("/0", "/");
+                    if (trimZeros){
+                        if (label.indexOf("0")===0) label = label.substring(1);
+                        label = label.replaceAll("/0", "/");
+                    }
+
                     nodeList[index].textContent = label;
                 }
             });
@@ -521,23 +558,24 @@ bluewave.chart.utils = {
 
             if (!chartConfig.yFormat) updateDefaultTicks(yAxis, yType);
 
+            var labels = yAxis.selectAll("text");
+            let length = labels.size();
+
+
+
           //Hide every other y-tick if they're crowded
             var yBoxes = getBoxes(yAxis);
             var yLabelsIntersect = foundIntersection(yBoxes, -1);
 
             if (yLabelsIntersect) {
 
-                let length = yAxis.selectAll("text").size();
-
-                yAxis
-                    .selectAll("text")
-                    .attr("visibility", function (text, i) {
-                        //Check cardinality to ensure top tick is always displayed
-                        if (length%2) {
-                            return (i + 1) % 2 === 0 ? "hidden" : "visible";
-                        }
-                        else return i % 2 === 0 ? "hidden" : "visible";
-                    });
+                labels.attr("visibility", function (text, i) {
+                    //Check cardinality to ensure top tick is always displayed
+                    if (length%2) {
+                        return (i + 1) % 2 === 0 ? "hidden" : "visible";
+                    }
+                    else return i % 2 === 0 ? "hidden" : "visible";
+                });
             }
         }
 
