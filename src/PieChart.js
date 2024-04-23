@@ -32,8 +32,27 @@ bluewave.charts.PieChart = function(parent, config) {
        */
         maximumSlices: null,
 
+      /** If true, will render labels for each slice of the pie. Default is
+       *  true.
+       */
         showLabels: true,
+
+
         labelOffset: 100,
+
+
+      /** If true, will render a tooltip over slices of the pie. The tooltip
+       *  can be customized by overriding the getTooltipLabel() method. Default
+       *  is false.
+       */
+        showTooltip: false,
+
+
+      /** Used to specify a CSS class name to use for the tooltip. Only used
+       *  when showTooltip is true.
+       */
+        tooltipClass: "tooltip",
+
 
       /** If true and if the pieCutout is greater than 0, will render a label in
        *  the center of the pie chart. By default, the label will render the sum
@@ -99,7 +118,7 @@ bluewave.charts.PieChart = function(parent, config) {
   //**************************************************************************
   //** getValueLabel
   //**************************************************************************
-  /** Called whenever a label is rendered
+  /** Called whenever a value is rendered
    */
     this.getValueLabel = function(value, data){
         var val = bluewave.chart.utils.parseFloat(value);
@@ -313,7 +332,7 @@ bluewave.charts.PieChart = function(parent, config) {
 
         var tooltip;
         if (config.showTooltip===true){
-            tooltip = createTooltip();
+            tooltip = createTooltip(config.tooltipClass);
         }
 
 
@@ -602,7 +621,7 @@ bluewave.charts.PieChart = function(parent, config) {
                 if (currTextHeight<orgTextHeight){
                     var labelScale = orgTextHeight/currTextHeight;
                     labelGroup.selectAll("text").each(function(d, i) {
-                        console.log(this);
+                        //console.log(this);
                         var translate = this.getAttribute('transform');
                         this.setAttribute('transform', translate + " scale(" + labelScale + ")");
                         //console.log(this.getAttribute('transform'));

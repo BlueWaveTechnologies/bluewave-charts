@@ -1500,18 +1500,24 @@ bluewave.chart.utils = {
   //**************************************************************************
   //** createTooltip
   //**************************************************************************
-    createTooltip: function(){
+  /** Used to create a tooltip for charts. The tooltip is a simple absolute
+   *  "div" that is inserted into the document body.
+   *  @param cls CSS class name used to stylize the tooltip. This parameter is
+   *  optional.
+   */
+    createTooltip: function(cls){
         var tooltip = bluewave.chart.utils.Tooltip;
         var getHighestElements = javaxt.dhtml.utils.getHighestElements;
         if (!tooltip){
             tooltip = bluewave.chart.utils.Tooltip =
             d3.select(document.body)
             .append("div")
+            .style("position", "absolute")
             .style("opacity", 0)
             .style("top", 0)
             .style("left", 0)
             .style("display", "none")
-            .attr("class", "tooltip");
+            .attr("class", cls ? cls : "tooltip");
 
 
             tooltip.show = function(){
