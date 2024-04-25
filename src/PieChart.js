@@ -330,6 +330,21 @@ bluewave.charts.PieChart = function(parent, config) {
         var innerRadius = radius*cutout;
 
 
+
+      //Get animationSteps and set animationRunning flag
+        var animationSteps = parseInt(config.animationSteps+"");
+        var animationRunning;
+        if (!isNaN(animationSteps) && animationSteps > 50) {
+            animationRunning = true;
+        }
+        else{
+            animationSteps = 0;
+            animationRunning = false;
+        }
+
+
+
+      //Create tooltip
         var tooltip;
         if (config.showTooltip===true){
             tooltip = createTooltip(config.tooltipClass);
@@ -337,6 +352,7 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
         var mouseover = function(e, d) {
+            if (animationRunning) return;
             if (tooltip){
                 var label = me.getTooltipLabel(d.data);
                 tooltip.html(label).show();
@@ -345,12 +361,14 @@ bluewave.charts.PieChart = function(parent, config) {
         };
 
         var mousemove = function(e) {
+            if (animationRunning) return;
             if (tooltip) tooltip
             .style('top', (e.clientY) + "px")
             .style('left', (e.clientX + 20) + "px");
         };
 
         var mouseleave = function() {
+            if (animationRunning) return;
             if (tooltip) tooltip.hide();
             d3.select(this).transition().duration(100).attr("opacity", "1");
         };
@@ -676,8 +694,7 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
       //Add animations
-        var animationSteps = config.animationSteps;
-        if (!isNaN(animationSteps) && animationSteps > 50) {
+        if (animationSteps) {
 
             var totalDelay = 0;
             animationSteps /= 2;
@@ -698,7 +715,7 @@ bluewave.charts.PieChart = function(parent, config) {
               var thisDelay = totalDelay;
               var nextDelay = angleRatio * animationSteps;
 
-              totalDelay += nextDelay ;
+              totalDelay += nextDelay;
 
               return thisDelay;
             })
@@ -745,6 +762,11 @@ bluewave.charts.PieChart = function(parent, config) {
                 .attr("opacity", 1);
             }
 
+
+          //Update animationRunning variable
+            setTimeout(()=>{
+                animationRunning = false;
+            }, totalDelay);
 
         };
 
