@@ -141,14 +141,20 @@ bluewave.charts.TreeMapChart = function(parent, config) {
   //**************************************************************************
     this.update = function(chartConfig, data, callback){
         me.clear();
+        if (arguments.length===0) return;
 
-        if (arguments.length>1){
-            me.setConfig(chartConfig);
+
+      //Shift arguments as needed
+        if (Array.isArray(chartConfig)) {
+            callback = data;
+            data = chartConfig;
         }
         else{
-            data = arguments[0];
+            me.setConfig(chartConfig);
         }
 
+
+      //Render chart and call the callback
         checkSVG(me, function(){
             renderChart(data);
             if (callback) callback();
@@ -198,7 +204,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
         }
         for (var groupName in groups) {
             if (groups.hasOwnProperty(groupName)){
-                groups[groupName] = me.getGroup(groupName)
+                groups[groupName] = me.getGroup(groupName);
             }
         }
         return groups;
