@@ -345,6 +345,8 @@ bluewave.chart.utils = {
             var years;
             var days;
 
+            var prevYear = "";
+
             axis
             .selectAll("text").each(function(value, index, nodeList) {
                 var label = nodeList[index].textContent;
@@ -378,10 +380,12 @@ bluewave.chart.utils = {
                     }
 
                     var trimZeros = true;
-                    if (years.length>1){
+                    if (years.length>1){ //render years instead of dates
                         if (days.length==1){
                             var format = d3.timeFormat("%Y"); //"%m/%y"
                             label = format(value);
+                            if (label===prevYear) label = "";
+                            else prevYear = label;
                             trimZeros = false;
                         }
                     }
