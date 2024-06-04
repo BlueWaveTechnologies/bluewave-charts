@@ -342,6 +342,7 @@ bluewave.chart.utils = {
 
         var updateDefaultTicks = function(axis, type){
             var numWholeNumbers;
+            var dates;
             var years;
             var days;
 
@@ -365,11 +366,13 @@ bluewave.chart.utils = {
                 }
                 else if (type === "date"){
 
-                    if (!years){
+                    if (!dates){
+                        dates = [];
                         years = {};
                         days = {};
                         nodeList.forEach(function(n){
                             var date = new Date(n.textContent); //assumes m/d/yyyy
+                            dates.push(date);
                             var y = date.getFullYear();
                             var d = date.getDate();
                             years[y+""] = true;
@@ -385,7 +388,25 @@ bluewave.chart.utils = {
                             var format = d3.timeFormat("%Y"); //"%m/%y"
                             label = format(value);
                             if (label===prevYear) label = "";
-                            else prevYear = label;
+                            else{
+                                prevYear = label;
+
+
+                              //Super hack! Hide the first label if the year
+                              //doesn't match the year for the next two ticks.
+                                if (index===0){
+                                    if (index+2<dates.length){
+                                        var nextDate = dates[index+1];
+                                        var nextDate2 = dates[index+2];
+                                        if (nextDate.getFullYear()+""!=label &&
+                                            nextDate.getFullYear()==nextDate2.getFullYear()){
+                                            label = "";
+                                        }
+                                    }
+                                }
+
+
+                            }
                             trimZeros = false;
                         }
                     }
