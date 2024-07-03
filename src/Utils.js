@@ -302,7 +302,7 @@ bluewave.chart.utils = {
 
         var scaleOption = chartConfig.scaling==="logarithmic" ? "logarithmic" : "linear";
         sb = getScale(yKey,yType,[axisHeight,0],chartData,minData,scaleOption,chartConfig.yMin,chartConfig.yMax);
-        var y = sb.scale;
+        var y = sb.scale.nice(); //nice() makes the upper tick to show up
         var yBand = sb.band;
 
 
@@ -571,18 +571,18 @@ bluewave.chart.utils = {
         if (!(chartConfig.yTicks===true || chartConfig.yTicks===false)){
             yTicks = chartConfig.yTicks;
         }
-        var yAxis = plotArea
-            .append("g");
+        var ySide = chartConfig.yAxisAlign==="right" ? "Right" : "Left";
+        var yAxis = plotArea.append("g");
 
         if (chartConfig.yTicks===false){
 
 
             yAxis.call(scaleOption==="linear" ?
-                d3.axisLeft(y)
+                d3["axis"+ySide](y)
                     .tickFormat(yFormat)
                     .tickSize([0,0])
                 :
-                d3.axisLeft(y)
+                d3["axis"+ySide](y)
                     .ticks(10, ",")
                     .tickFormat(yFormat)
                     .tickSize([0,0])
@@ -599,11 +599,11 @@ bluewave.chart.utils = {
         else{
 
             yAxis.call(scaleOption==="linear" ?
-                d3.axisLeft(y)
+                d3["axis"+ySide](y)
                 .ticks(yTicks)
                 .tickFormat(yFormat)
                 :
-                d3.axisLeft(y)
+                d3["axis"+ySide](y)
                 .ticks(10, ",")
                 .tickFormat(yFormat)
             );
@@ -682,7 +682,21 @@ bluewave.chart.utils = {
         if (marginRight<0) marginRight = 0;
 
 
-        marginLeft = Math.max(yExtents.width, marginLeft); //extra space for the y-axis labels
+        if (ySide==="Right"){
+            marginLeft = 0;
+            marginRight = yExtents.width;
+
+          //Move the y-axis to the right
+            var xOffset = 0;
+            xAxis.selectAll("path").each(function(d, i) {
+                var box = javaxt.dhtml.utils.getRect(this);
+                xOffset = Math.max(box.width, xOffset);
+            });
+            yAxis.attr("transform", "translate(" + xOffset + ", 0)");
+        }
+        else{
+            marginLeft = Math.max(yExtents.width, marginLeft); //extra space for the y-axis labels
+        }
 
         var marginTop = top-yExtents.top; //extra space for the top-most y-axis label
         var marginBottom = xExtents.height;
@@ -710,16 +724,25 @@ bluewave.chart.utils = {
         var yLabel = chartConfig.yLabel;
         if (yLabel){
 
+            var x0 = -(yExtents.width+labelOffset);
+            if (ySide==="Right") x0 = -x0;
+            var y0 = -(yExtents.height/2);
+
             var t = yAxis.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("x", -(yExtents.height/2)) //set vertical position
-            .attr("y", -(yExtents.width+labelOffset)) //set horizontal position
+            .attr("x", y0) //set vertical position
+            .attr("y", x0) //set horizontal position
             .attr("class", "chart-axis-label")
             .style("text-anchor", "middle")
             .text(yLabel);
 
             var r = javaxt.dhtml.utils.getRect(t.node());
-            marginLeft = Math.max(marginLeft+(r.width+labelOffset), marginLeft);
+            if (ySide==="Right"){
+                marginRight = Math.max(marginRight+(r.width+labelOffset), marginRight);
+            }
+            else{
+                marginLeft = Math.max(marginLeft+(r.width+labelOffset), marginLeft);
+            }
         }
 
 
