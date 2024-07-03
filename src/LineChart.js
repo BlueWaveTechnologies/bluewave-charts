@@ -24,8 +24,21 @@ bluewave.charts.LineChart = function(parent, config) {
        */
         yGrid: false,
 
+      /** If true, will render labels and ticks along the x-axis.
+       */
+        xTicks: true,
+
+      /** If true, will render labels and ticks along the y-axis.
+       */
+        yTicks: true,
+
+      /** Used to set the position of the labels and ticks along the y-axis.
+       *  Options include "left" or "right". Default is left.
+       */
+        yAxisAlign: "left",
+
       /** Used to set the horizontal scaling option. Options include
-       *  "logarithmic" and "linear" (default)
+       *  "logarithmic" and "linear" (default).
        */
         scaling: "linear", //"logarithmic"
 
@@ -50,17 +63,17 @@ bluewave.charts.LineChart = function(parent, config) {
        */
         showTooltip: false,
 
-      /** Used to animate the lines as they are rendered in the graph.
+      /** Used to animate the lines as they are rendered in the graph. Set to 0
+       *  or false to disable animation.
        */
         animationSteps: 1500,
-
 
       /** Padding between axis labels. This value, plus the width of individual
        *  axis labels is used to determine whether labels will be rotated along
        *  the x-axis.
        */
         labelPadding: 3
-        
+
     };
     var svg, chart, plotArea;
     var x, y;
@@ -1261,9 +1274,11 @@ bluewave.charts.LineChart = function(parent, config) {
 
                 let average = movingAverage(values, smoothingValue);
 
+
                 data.forEach(function(d, i){
-                    d.value = average[i];
+                    d.value = isNaN(average[i]) ? 0 : average[i];
                 });
+
             }
         }
         else if (smoothingType==="kde"){
