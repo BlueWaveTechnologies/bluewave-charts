@@ -485,17 +485,32 @@ bluewave.chart.utils = {
             .attr("transform", "translate(0," + axisHeight + ")");
 
         if (chartConfig.xTicks===false){
+
+          //Create x-axis
             xAxis.call(
                 d3.axisBottom(x)
                 .ticks(xTicks)
-                .tickSize([0,0])
+                //.tickSize([0,0])
+                .tickFormat("") //no labels
             );
 
-            xAxis.selectAll("text").each(function(d, i) {
-                d3.select(this).remove();
+
+          //Hide ticks
+            xAxis.selectAll("line").each(function(d, i) {
+              //Don't delete! Set height to 0
+                this.setAttribute("y2", "0");
+                this.setAttribute("opacity", "0");
             });
+
+
+          //Hide line |-----------|
             xAxis.selectAll("path").each(function(d, i) {
-                d3.select(this).remove();
+              //Don't delete! Set height to 0
+                var d = this.getAttribute("d");
+                d = d.substring(d.indexOf("H"));
+                d = d.substring(0, d.indexOf("V"));
+                this.setAttribute("d", "M0,0" + d);
+                this.setAttribute("opacity", "0");
             });
 
         }
@@ -574,25 +589,36 @@ bluewave.chart.utils = {
         var ySide = chartConfig.yAxisAlign==="right" ? "Right" : "Left";
         var yAxis = plotArea.append("g");
 
-        if (chartConfig.yTicks===false){
 
+
+        if (chartConfig.yTicks===false){
 
             yAxis.call(scaleOption==="linear" ?
                 d3["axis"+ySide](y)
-                    .tickFormat(yFormat)
-                    .tickSize([0,0])
+                    .tickFormat("") //no labels
                 :
                 d3["axis"+ySide](y)
                     .ticks(10, ",")
-                    .tickFormat(yFormat)
-                    .tickSize([0,0])
+                    .tickFormat("") //no labels
             );
 
-            yAxis.selectAll("text").each(function(d, i) {
-                d3.select(this).remove();
+
+          //Hide ticks
+            yAxis.selectAll("line").each(function(d, i) {
+              //Don't delete! Set width to 0
+                this.setAttribute("x2", "0");
+                this.setAttribute("opacity", "0");
             });
+
+
+          //Hide vertical line |-----------|
             yAxis.selectAll("path").each(function(d, i) {
-                d3.select(this).remove();
+              //Don't delete! Set width to 0
+                var d = this.getAttribute("d");
+                d = "M0" + d.substring(d.indexOf(","));
+                d = d.substring(0, d.indexOf("H"))+"H0V0";
+                this.setAttribute("d", d);
+                this.setAttribute("opacity", "0");
             });
 
         }
@@ -632,6 +658,7 @@ bluewave.chart.utils = {
         }
 
 
+      //Clean up the DOM for the x and y axis - remove D3 default styles
         [xAxis, yAxis].forEach((axis)=>{
             axis.node().setAttribute("class", "axis");
             axis.node().removeAttribute("font-size");
@@ -649,7 +676,7 @@ bluewave.chart.utils = {
         });
 
 
-      //Calculate margins required to fit the labels
+      //Calculate the extents of the chart area, including ticks
         var xExtents = javaxt.dhtml.utils.getRect(xAxis.node());
         var yExtents = javaxt.dhtml.utils.getRect(yAxis.node());
 
@@ -671,19 +698,21 @@ bluewave.chart.utils = {
 
         yAxis.selectAll("path").each(function(d, i) {
             var box = javaxt.dhtml.utils.getRect(this);
+            if (box.width>0){
+                left = Math.min(box.x, left);
+                right = Math.max(box.x+box.width, right);
+            }
             top = Math.min(box.y, top);
             bottom = Math.max(box.y+box.height, bottom);
         });
 
-        var marginLeft = xExtents.left-left; //extra space for the left-most x-axis label
-        if (marginLeft<0) marginLeft = 0;
-
-        var marginRight = (xExtents.right-right); //extra space for the right-most x-axis label
-        if (marginRight<0) marginRight = 0;
 
 
+      //Compute margins so we can see all the labels
+        var marginLeft, marginRight;
         if (ySide==="Right"){
-            marginLeft = 0;
+
+            marginLeft = left>xExtents.left ? left-xExtents.left : 0;
             marginRight = yExtents.width;
 
           //Move the y-axis to the right
@@ -694,17 +723,24 @@ bluewave.chart.utils = {
             });
             yAxis.attr("transform", "translate(" + xOffset + ", 0)");
         }
-        else{
+        else{ //left (default)
+
+            marginLeft = xExtents.left-left; //extra space for the left-most x-axis label
+            if (marginLeft<0) marginLeft = 0;
             marginLeft = Math.max(yExtents.width, marginLeft); //extra space for the y-axis labels
+
+            marginRight = (xExtents.right-right); //extra space for the right-most x-axis label
+            if (marginRight<0) marginRight = 0;
         }
 
         var marginTop = top-yExtents.top; //extra space for the top-most y-axis label
-        var marginBottom = xExtents.height;
+        var marginBottom = Math.max(yExtents.bottom - bottom, xExtents.height);
 
 
         var labelOffset = 16;
 
-      //Add x-axis label as needed
+
+      //Add axis label/description below the x-axis as needed
         var xLabel = chartConfig.xLabel;
         if (xLabel){
 
@@ -720,7 +756,7 @@ bluewave.chart.utils = {
         }
 
 
-      //Add y-axis label as needed
+      //Add axis label/description to the left (or right) of the y-axis as needed
         var yLabel = chartConfig.yLabel;
         if (yLabel){
 
