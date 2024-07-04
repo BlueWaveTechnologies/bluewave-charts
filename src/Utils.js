@@ -302,7 +302,8 @@ bluewave.chart.utils = {
 
         var scaleOption = chartConfig.scaling==="logarithmic" ? "logarithmic" : "linear";
         sb = getScale(yKey,yType,[axisHeight,0],chartData,minData,scaleOption,chartConfig.yMin,chartConfig.yMax);
-        var y = sb.scale.nice(); //nice() makes the upper tick to show up
+        var y = sb.scale;
+        if (y.nice) y = y.nice(); //nice() makes the upper tick to show up
         var yBand = sb.band;
 
 
