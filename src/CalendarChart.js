@@ -168,17 +168,16 @@ bluewave.charts.CalendarChart = function(parent, config) {
   //**************************************************************************
     var renderChart = function(data){
         me.clear();
-        var chartConfig = config;
+        if (!config.date || !config.value) return;
 
 
 
         var rect = javaxt.dhtml.utils.getRect(svg.node());
         var width = rect.width;
         var height = rect.height;
-        calendarArea = chart.append("g");
-        calendarArea
-            .attr("width", width)
-            .attr("height", height);
+        calendarArea = chart.append("g")
+        .attr("width", width)
+        .attr("height", height);
 
 
 
@@ -192,18 +191,28 @@ bluewave.charts.CalendarChart = function(parent, config) {
 
 
 
-      //Update date and value fields in the data
+      //Group data by day
+        var arr = {};
         data.forEach((d)=>{
-            var date = d[config.date];
-            var value = d[config.value];
-            d[config.date] = new Date(date);
-            d[config.value] = bluewave.chart.utils.parseFloat(value);
+            var date = new Date(d[config.date]);
+            date.setHours(0,0,0,0);
+
+            var key = date.getFullYear() + "-" + date.getMonth() + "-" + date.getDate();
+            var value = bluewave.chart.utils.parseFloat(d[config.value]);
+
+            var r = arr[key];
+            if (r) r.value += value;
+            else arr[key] = {
+                date: date,
+                value: value
+            };
         });
+        data = Object.values(arr);
 
 
       //Sort array in reverse chronological order
         data.sort(function(a, b){
-            return b[config.date].getTime()-a[config.date].getTime();
+            return b.date.getTime()-a.date.getTime();
         });
 
 
@@ -213,8 +222,8 @@ bluewave.charts.CalendarChart = function(parent, config) {
         var years = {};
         var weeks = {};
         data.forEach((d)=>{
-            var date = d[config.date];
-            var value = d[config.value];
+            var date = d.date;
+            var value = d.value;
             dates.push(date);
             values.push(value);
 
@@ -238,8 +247,8 @@ bluewave.charts.CalendarChart = function(parent, config) {
       //Compute cellSize and xOffset
         var xOffset = 0;
         var maxWidth = width;
-        if (chartConfig.dayLabel) xOffset = 15; //width of day labels?
-        if (chartConfig.yearLabel) xOffset = Math.max(40, xOffset);
+        if (config.dayLabel) xOffset = 15; //width of day labels?
+        if (config.yearLabel) xOffset = Math.max(40, xOffset);
         var cellSize = Math.floor((maxWidth-xOffset)/numWeeks);
 
 
@@ -302,7 +311,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
             .attr("transform", (d, i) => `translate(${xOffset-0.5},${groupHeight * i + cellSize * 1.5})`);
 
       //Add year label if option is checked
-        if (chartConfig.yearLabel){
+        if (config.yearLabel){
 
           //Add year label to every group
               yearGroup.append("text")
@@ -315,7 +324,7 @@ bluewave.charts.CalendarChart = function(parent, config) {
 
 
       //Add day label if option is checked
-        if (chartConfig.dayLabel){
+        if (config.dayLabel){
 
           //Add day of week abbreviation on the left side of each group
             yearGroup.append("g")
