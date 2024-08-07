@@ -5,8 +5,9 @@ if(!bluewave.charts) bluewave.charts={};
 //**  TreeMapChart
 //******************************************************************************
 /**
- *   Chart used to display hierarchical data using nested rectangles. Provides
- *   an option to render hierarches using voronoi tesselations/partitions.
+ *   Chart used to display hierarchical data using nested cells. Provides an
+ *   option to render hierarches using voronoi tesselations/partitions or
+ *   rectangular cells.
  *
  ******************************************************************************/
 
@@ -17,12 +18,31 @@ bluewave.charts.TreeMapChart = function(parent, config) {
         key: "name",
         value: "value",
         shape: "square", //vs circle
-        groupBy: null,
+
         colors: d3.schemeCategory10,
         keyLabel: true,
         valueLabel: true,
+        groupBy: null,
         groupLabel: true,
+
+
+      /** Used to specify the maximum number of groups to render in the chart.
+       *  Only applicable when the groupBy config is defined. This config
+       *  is specified as an integer value. Default is null so all groups are
+       *  rendered.
+       */
+        maxGroups: null,
+
+      /** Used to specify the maximum number of items to render in the chart.
+       *  When groupBy is defined, maxItems is used to defined the maximum
+       *  items to render in a group and the maxGroups is used to defined the
+       *  maximum number of groups. This config is specified as an integer
+       *  value. Default is null so all groups are rendered.
+       */
+        maxItems: null,
+
         showTooltip: false,
+
         style: {
             keyLabel: {
                 "font-size": "14px",
@@ -72,6 +92,9 @@ bluewave.charts.TreeMapChart = function(parent, config) {
         else{
             tooltip = false;
         }
+
+        config.maxGroups = parseInt(config.maxGroups+"");
+        config.maxItems = parseInt(config.maxItems+"");
     };
 
 
@@ -214,7 +237,7 @@ bluewave.charts.TreeMapChart = function(parent, config) {
   //**************************************************************************
   //** getNestedObject
   //**************************************************************************
-  /* Used to parse through the data heirarchy (parameter: object) and return
+  /* Used to parse through the data hierarchy (parameter: object) and return
    * the object matching the value (parameter: value) of key (parameter: key)
    */
     var getNestedObject = (object, key, value) => {
@@ -251,20 +274,15 @@ bluewave.charts.TreeMapChart = function(parent, config) {
     var getDataHierarchy = function(data){
 
       //Generate unique list of group names
-        var groupNames = [];
-        var groupBy = null;
-        if (config.groupBy !== null){
-            var groupBy = (config.groupBy + "").trim();
+        var groupNames = new Set();
+        var groupBy = config.groupBy;
+        if (groupBy){
+            groupBy = (config.groupBy + "").trim();
             if (groupBy.length>0){
-                var map = {};
                 data.forEach((d)=>{
                     var group = d[groupBy];
-                    map[group] = true;
+                    groupNames.add(group);
                 });
-                groupNames = Object.keys(map);
-            }
-            else{
-                groupBy = null;
             }
         }
 
@@ -295,24 +313,33 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
 
 
-        if (groupBy !== null){
+        if (groupNames.size>0){
             groupNames.forEach((g)=> {
-                dataHierarchy["children"].push({"name": g, "children":[], "colname":"level2"});
+                dataHierarchy["children"].push({
+                    name: g,
+                    children: [],
+                    colname: "level2"
+                });
                 var objectToInsertTo = getNestedObject(dataHierarchy["children"], 'name', g);
 
                 data.forEach((d)=>{
-                    var userValue = d[config.key];
+                    var key = d[config.key];
                     var groupByValue = d[groupBy];
                     var value = d[config.value];
 
                     if (g === groupByValue){
-                        // check whether this user already exists - if he does then accumulate values with pre-existing record
-                        if (typeof(getNestedObject(objectToInsertTo["children"],"name", userValue)) !== "undefined"){
-                            var userRecord = getNestedObject(objectToInsertTo["children"],"name", userValue);
-                            userRecord["value"] = userRecord["value"] + value;
+                        // check whether record already exists - if he does then accumulate values with pre-existing record
+                        var record = getNestedObject(objectToInsertTo["children"],"name", key);
+                        if (typeof(record) !== "undefined"){
+                            record["value"] += value;
                         }
-                        else {    // create new user record
-                            objectToInsertTo["children"].push({"name": userValue,"group": groupByValue, "colname":"level3","value":value});
+                        else { // create new record
+                            objectToInsertTo["children"].push({
+                                name: key,
+                                group: groupByValue,
+                                colname:"level3",
+                                value:value
+                            });
                         };
                     };
                 });
@@ -358,7 +385,66 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
 
 
-          //Update groupNames using sorted values
+          //Prune groups as needed
+            if (dataHierarchy.children.length>config.maxGroups){
+                var arr = [];
+                for (var i=0; i<dataHierarchy.children.length; i++){
+                    if (i<config.maxGroups-1){
+                        arr.push(dataHierarchy.children[i]);
+                    }
+                    else{
+                        var children = [];
+                        for (var j=i; j<dataHierarchy.children.length; j++){
+                            children.push(...dataHierarchy.children[j].children);
+                        }
+                        for (var j=0; j<children.length; j++){
+                            children[j].group = "Other";
+                        }
+                        arr.push({
+                            name: "Other",
+                            children: children,
+                            colname: "level2"
+                        });
+                        break;
+                    }
+                }
+                dataHierarchy.children = arr;
+            }
+
+
+
+          //Prune items within groups as needed
+            dataHierarchy.children.forEach((d)=>{
+                if (d.children.length>config.maxItems){
+
+                    var arr = [];
+                    for (var i=0; i<d.children.length; i++){
+                        if (i<config.maxItems-1){
+                            arr.push(d.children[i]);
+                        }
+                        else{
+
+                            var group, value = 0;
+                            for (var j=i; j<d.children.length; j++){
+                                group = d.children[j].group;
+                                value+=d.children[j].value;
+                            }
+
+                            arr.push({
+                                name: "Other",
+                                group: group,
+                                value: value,
+                                colname: "level3"
+                            });
+                            break;
+                        }
+                    }
+                    d.children = arr;
+                }
+            });
+
+
+          //Update groupNames
             groupNames = [];
             dataHierarchy.children.forEach((d)=>{
                 groupNames.push(d.name);
@@ -366,24 +452,63 @@ bluewave.charts.TreeMapChart = function(parent, config) {
 
         }
         else{
-            dataHierarchy["children"].push({"name": "", "children":[], "colname":"level2"});
+            groupNames = null;
+
+            dataHierarchy["children"].push({
+                name: "",
+                children: [],
+                colname: "level2"
+            });
             var objectToInsertTo = getNestedObject(dataHierarchy["children"], 'name', "");
 
             data.forEach((d)=>{
-                var userValue = d[config.key];
+                var key = d[config.key];
                 var value = d[config.value];
                 var groupByValue = "";
-                // check whether this user already exists - if he does then accumulate values with pre-existing record
-                if (typeof(getNestedObject(objectToInsertTo["children"],"name", userValue)) !== "undefined"){
-                    var userRecord = getNestedObject(objectToInsertTo["children"],"name", userValue);
-                    userRecord["value"] = userRecord["value"] + value;
-                }
 
-                else {    // create new user record
-                    objectToInsertTo["children"].push({"name": userValue,"group": groupByValue, "colname":"level3","value":value});
+                // check whether record already exists - if he does then accumulate values with pre-existing record
+                var record = getNestedObject(objectToInsertTo["children"],"name", key);
+                if (typeof(record) !== "undefined"){
+                    record["value"] += value;
+                }
+                else { // create new record
+                    objectToInsertTo["children"].push({
+                        name: key,
+                        group: "",
+                        colname:"level3",
+                        value: value
+                    });
                 };
 
             });
+
+
+
+          //Prune items as needed
+            if (dataHierarchy.children[0].children.length>config.maxItems){
+                var arr = [];
+                for (var i=0; i<dataHierarchy.children[0].children.length; i++){
+                    if (i<config.maxItems-1){
+                        arr.push(dataHierarchy.children[0].children[i]);
+                    }
+                    else{
+
+                        var value = 0;
+                        for (var j=i; j<dataHierarchy.children[0].children.length; j++){
+                            value+=dataHierarchy.children[0].children[j].value;
+                        }
+
+                        arr.push({
+                            name: "Other",
+                            group: "",
+                            value: value,
+                            colname: "level3"
+                        });
+                        break;
+                    }
+                }
+                dataHierarchy.children[0].children = arr;
+            }
 
         };
 
