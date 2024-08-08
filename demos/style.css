@@ -84,10 +84,7 @@ p {
 /** Labels
 /**************************************************************************/
 
-.label {
-    font-family: 'Segoe UI Variable Small'; /* for windows */
-    font-size: 10px;
-    color: #555;
+svg text {
     -webkit-user-select: none;
     -moz-user-select: none;
     -o-user-select: none;
@@ -95,6 +92,23 @@ p {
     -khtml-user-select: none;
     user-select: none;
 }
+
+
+text.label {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text',
+    helvetica,arial,verdana,sans-serif;
+    font-size: 10px;
+}
+
+text.label,
+.tick {
+    color: #555;
+}
+
+.axis {
+    color:#a9a9a9
+}
+
 
 
 .treemap .label {
@@ -133,7 +147,7 @@ p {
     height: 100%;
     background-color: #f8f8f8;
     border-radius: 5px;border: 1px solid #dcdcdc;margin: 10px;
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .cm-s-default .cm-comment{
