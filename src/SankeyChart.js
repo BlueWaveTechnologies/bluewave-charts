@@ -13,12 +13,16 @@ bluewave.charts.SankeyChart = function(parent, config) {
 
     var me = this;
     var defaultConfig = {
-        margin: {
-            top: 10,
-            right: 10,
-            bottom: 10,
-            left: 10
-        },
+
+        colors: d3.schemeCategory10,
+
+
+      /** If true, will render labels for each node and link in the sankey.
+       *  Default is false.
+       */
+        showTooltip: false,
+
+
         links: {
             color: "#ccc",
             opacity: 0.3
@@ -27,7 +31,7 @@ bluewave.charts.SankeyChart = function(parent, config) {
     var svg, chart, sankeyArea;
     var nodes = [];
     var links = [];
-    var getColor = d3.scaleOrdinal(d3.schemeCategory10);
+    var getColor;
 
 
   //**************************************************************************
@@ -74,6 +78,21 @@ bluewave.charts.SankeyChart = function(parent, config) {
   //**************************************************************************
     this.getNodeLabel = function(d){
         return d.name;
+    };
+
+
+  //**************************************************************************
+  //** getTooltipLabel
+  //**************************************************************************
+  /** Called whenever a tooltip is rendered. Override as needed.
+   */
+    this.getTooltipLabel = function(type, d){
+        if (type==="link"){
+            return d.source.name + " -> " + d.target.name +  "<br/>" + formatNumber(d.value);
+        }
+        else if (type==="node"){
+            return d.name +  "<br/>" + formatNumber(d.value);
+        }
     };
 
 
@@ -168,6 +187,12 @@ bluewave.charts.SankeyChart = function(parent, config) {
         clearChart();
 
 
+      //Create an array of colors, one for each group name
+        var colors = config.colors;
+        getColor = d3.scaleOrdinal(colors);
+
+
+
         var width = parent.offsetWidth;
         var height = parent.offsetHeight;
         sankeyArea = chart.append("g");
@@ -198,7 +223,6 @@ bluewave.charts.SankeyChart = function(parent, config) {
         var size = sankey.size();
         var width = size[0];
 
-        var formatNumber = d3.format(",.0f"); // zero decimal places
 
 
         var getLinkColor = function(d, opacity){
@@ -214,29 +238,50 @@ bluewave.charts.SankeyChart = function(parent, config) {
 
 
 
+      //Create tooltip
+        var tooltip;
+        if (config.showTooltip===true){
+            tooltip = createTooltip(config.tooltipClass);
+        }
+
+        var mousemove = function(e) {
+            if (tooltip) tooltip
+            .style('top', (e.clientY) + "px")
+            .style('left', (e.clientX + 20) + "px");
+        };
+
+
+
 
       //Add the links
         var linkGroup = sankeyArea.append("g");
         linkGroup.attr("name", "links");
 
         var link = linkGroup.selectAll("*")
-          .data(graph.links)
-          .enter()
-          .append("path")
-          .attr("class", "sankey-link")
-          .attr("d", d3.sankeyLinkHorizontal())
-          .attr("stroke-width", function (d) {
-                return Math.max(d.width, 1);
-          })
-          .on('mouseover', function(e, d){
-                var opacity = Math.min(1, config.links.opacity*1.3);
-                var linkColor = getLinkColor(d, opacity);
-                d3.select(this).style("stroke", linkColor);
-          })
-          .on('mouseout', function(e, d){
-                var linkColor = getLinkColor(d, config.links.opacity);
-                d3.select(this).style("stroke", linkColor);
-          });
+        .data(graph.links)
+        .enter()
+        .append("path")
+        .attr("class", "sankey-link")
+        .attr("d", d3.sankeyLinkHorizontal())
+        .attr('fill', 'none')
+        .attr("stroke-width", function (d) {
+              return Math.max(d.width, 1);
+        })
+        .on('mouseover', function(e, d) {
+            if (tooltip){
+                var label = me.getTooltipLabel("link", d);
+                tooltip.html(label).show();
+            }
+            var opacity = Math.min(1, config.links.opacity*1.3);
+            var linkColor = getLinkColor(d, opacity);
+            d3.select(this).style("stroke", linkColor);
+        })
+        .on("mousemove", mousemove)
+        .on('mouseleave', function(e, d) {
+              if (tooltip) tooltip.hide();
+              var linkColor = getLinkColor(d, config.links.opacity);
+              d3.select(this).style("stroke", linkColor);
+        });
 
 
 
@@ -253,27 +298,35 @@ bluewave.charts.SankeyChart = function(parent, config) {
 
       //Add the rectangles for the nodes
         node
-          .append("rect")
-          .attr("x", function (d) {
-            return d.x0;
-          })
-          .attr("y", function (d) {
-            return d.y0;
-          })
-          .attr("height", function (d) {
-              return Math.max(d.y1 - d.y0, 1);
-          })
-          .attr("width", sankey.nodeWidth())
-          .style("fill", function (d) {
-            return (d.color = me.getNodeColor(d));
-          })
-          .style("stroke", function (d) {
-            return d3.rgb(d.color).darker(2);
-          })
-          .append("title")
-          .text(function (d) {
-            return d.name + "\n" + formatNumber(d.value);
-          });
+        .append("rect")
+        .attr("x", function (d) {
+          return d.x0;
+        })
+        .attr("y", function (d) {
+          return d.y0;
+        })
+        .attr("height", function (d) {
+            return Math.max(d.y1 - d.y0, 1);
+        })
+        .attr("width", sankey.nodeWidth())
+        .style("fill", function (d) {
+          return (d.color = me.getNodeColor(d));
+        })
+        .style("stroke", function (d) {
+          return d3.rgb(d.color).darker(2);
+        })
+        .on('mouseover', function(e, d) {
+            if (tooltip){
+                var label = me.getTooltipLabel("node", d);
+                tooltip.html(label).show();
+            }
+            d3.select(this).transition().duration(100).attr("opacity", "0.8");
+        })
+        .on("mousemove", mousemove)
+        .on('mouseleave', function(e, d) {
+            if (tooltip) tooltip.hide();
+            d3.select(this).transition().duration(100).attr("opacity", "1");
+        });
 
 
 
@@ -284,13 +337,6 @@ bluewave.charts.SankeyChart = function(parent, config) {
             path.style("stroke", function (d) {
                 return getLinkColor(d, config.links.opacity);
             });
-        });
-
-
-
-      //Add link labels
-        link.append("title").text(function (d) {
-          return d.source.name + " → " + d.target.name + "\n" + formatNumber(d.value);
         });
 
 
@@ -319,6 +365,9 @@ bluewave.charts.SankeyChart = function(parent, config) {
     };
 
 
+    var formatNumber = d3.format(",.0f"); // zero decimal places
+
+
   //**************************************************************************
   //** Utils
   //**************************************************************************
@@ -326,6 +375,7 @@ bluewave.charts.SankeyChart = function(parent, config) {
     var checkSVG = bluewave.chart.utils.checkSVG;
     var initChart = bluewave.chart.utils.initChart;
     var mixColors = bluewave.chart.utils.mixColors;
+    var createTooltip = bluewave.chart.utils.createTooltip;
 
     init();
 };
