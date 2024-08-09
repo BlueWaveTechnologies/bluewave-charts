@@ -22,6 +22,14 @@ bluewave.charts.SankeyChart = function(parent, config) {
        */
         showTooltip: false,
 
+      /** Keyword list used to parse input data.
+       */
+        keywords: {
+            source: "source",
+            target: "target",
+            value: "value",
+            group: "group"
+        },
 
         links: {
             color: "#ccc",
@@ -159,11 +167,91 @@ bluewave.charts.SankeyChart = function(parent, config) {
 
         if (data){
             me.clear();
-            if (data.nodes){
-                nodes = data.nodes;
+
+
+            if (isArray(data)){ //csv data from d3.csvParse(csv);
+
+              //Parse data into nodes, links, and groups
+                nodes = new Set();
+                links = [];
+                var groups = {};
+                data.forEach((d)=>{
+
+                    var group = d[config.keywords.group];
+                    var source = d[config.keywords.source];
+                    var target = d[config.keywords.target];
+                    var value = parseFloat(d[config.keywords.value]+"");
+                    if (isNaN(value)) return;
+
+                    links.push({
+                        source: source,
+                        target: target,
+                        value: value
+                    });
+
+                    nodes.add(source);
+                    nodes.add(target);
+
+                    var g = groups[group];
+                    if (!g) {
+                        g = new Set();
+                        groups[group] = g;
+                    }
+                    g.add(source);
+                });
+
+
+              //Create "last" group with orphan nodes
+                var lastGroup = new Set();
+                nodes.forEach((node)=>{
+                    var groupName = null;
+                    for (var key in groups) {
+                        if (groups.hasOwnProperty(key)){
+                            if (groups[key].has(node)){
+                                groupName = key;
+                                break;
+                            }
+                        }
+                    }
+                    if (!groupName) lastGroup.add(node);
+                });
+
+
+              //Add last group to groups
+                groups[new Date().getTime()+""] = lastGroup;
+
+
+              //Create node array
+                nodes = [];
+                for (var key in groups) {
+                    if (groups.hasOwnProperty(key)){
+                        groups[key].forEach((node)=>{
+                            nodes.push({
+                                name: node,
+                                group: key
+                            });
+                        });
+                    }
+                }
             }
-            if (data.links){
-                links = data.links;
+            else{
+
+                if (data.nodes && isArray(data.nodes)){
+                    nodes = data.nodes;
+                    nodes.forEach((node)=>{
+                        node.group = node[config.keywords.group];
+                    });
+                }
+                if (data.links && isArray(data.links)){
+                    links = data.links;
+                    links.forEach((link)=>{
+                        link.source = link[config.keywords.source];
+                        link.target = link[config.keywords.target];
+                        var value = parseFloat(link[config.keywords.value]+"");
+                        if (isNaN(value)) value = 0;
+                        link.value = value;
+                    });
+                }
             }
         }
 
@@ -383,6 +471,7 @@ bluewave.charts.SankeyChart = function(parent, config) {
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
+    var isArray = bluewave.chart.utils.isArray;
     var checkSVG = bluewave.chart.utils.checkSVG;
     var initChart = bluewave.chart.utils.initChart;
     var mixColors = bluewave.chart.utils.mixColors;
