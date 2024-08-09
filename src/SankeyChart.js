@@ -68,6 +68,9 @@ bluewave.charts.SankeyChart = function(parent, config) {
   //**************************************************************************
   //** getNodeColor
   //**************************************************************************
+  /** Called when a node is rendered. Returns a color for the node. You can
+   *  override this method to set a custom color for the node.
+   */
     this.getNodeColor = function(d){
         return getColor(d.name.replace(/ .*/, ""));
     };
@@ -76,6 +79,9 @@ bluewave.charts.SankeyChart = function(parent, config) {
   //**************************************************************************
   //** getNodeLabel
   //**************************************************************************
+  /** Called when a node is rendered. Returns a label for the node. You can
+   *  override this method to set a custom label for the node.
+   */
     this.getNodeLabel = function(d){
         return d.name;
     };
@@ -144,7 +150,12 @@ bluewave.charts.SankeyChart = function(parent, config) {
   //**************************************************************************
     this.update = function(chartConfig, data){
         //me.clear();
-        me.setConfig(chartConfig);
+        if (arguments.length>1){
+            me.setConfig(chartConfig);
+        }
+        else{
+            data = arguments[0];
+        }
 
         if (data){
             me.clear();
