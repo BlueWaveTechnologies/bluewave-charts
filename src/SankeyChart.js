@@ -461,6 +461,44 @@ bluewave.charts.SankeyChart = function(parent, config) {
             return d.x1 + 6;
           })
           .attr("text-anchor", "start");
+
+
+
+      //Update scale and position as needed
+        var box = getMinMax(sankeyArea);
+        box.width = (box.maxX - box.minX);
+        box.height = (box.maxY - box.minY);
+        if (box.width!=width || box.height!=height){
+
+            var scale;
+            var widthDiff = Math.abs(box.width - width);
+            var heightDiff = Math.abs(box.height - height);
+
+
+            if (widthDiff > heightDiff){
+                scale = width/box.width;
+                if (scale>1){
+                    scale = 1+(1-scale);
+                }
+            }
+            else if (heightDiff > widthDiff) {
+                scale = height/box.height;
+            }
+
+
+            var x = (widthDiff/2)*scale;
+            var y = (heightDiff/2)*scale;
+
+
+          //Apply scaling and position
+            sankeyArea
+              .attr("transform",
+                "translate(" + x + "," + y + ") " +
+                "scale(" + scale + ")"
+            );
+        }
+
+
     };
 
 
@@ -474,6 +512,7 @@ bluewave.charts.SankeyChart = function(parent, config) {
     var isArray = bluewave.chart.utils.isArray;
     var checkSVG = bluewave.chart.utils.checkSVG;
     var initChart = bluewave.chart.utils.initChart;
+    var getMinMax = bluewave.chart.utils.getMinMax;
     var mixColors = bluewave.chart.utils.mixColors;
     var createTooltip = bluewave.chart.utils.createTooltip;
 
