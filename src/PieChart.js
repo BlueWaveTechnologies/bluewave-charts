@@ -363,8 +363,8 @@ bluewave.charts.PieChart = function(parent, config) {
         var mousemove = function(e) {
             if (animationRunning) return;
             if (tooltip) tooltip
-            .style('top', (e.clientY) + "px")
-            .style('left', (e.clientX + 20) + "px");
+            .style('top', (e.pageY) + "px")
+            .style('left', (e.pageX + 20) + "px");
         };
 
         var mouseleave = function() {
