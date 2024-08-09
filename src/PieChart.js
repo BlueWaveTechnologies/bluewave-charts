@@ -793,36 +793,13 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
   //**************************************************************************
-  //** getMinMax
-  //**************************************************************************
-    var getMinMax = function(g){
-        var minX = Number.MAX_VALUE;
-        var maxX = 0;
-        var minY = Number.MAX_VALUE;
-        var maxY = 0;
-        g.selectAll("*").each(function(){
-            var rect = javaxt.dhtml.utils.getRect(d3.select(this).node());
-            minX = Math.min(rect.left, minX);
-            maxX = Math.max(rect.right, maxX);
-            minY = Math.min(rect.top, minY);
-            maxY = Math.max(rect.bottom, maxY);
-        });
-        return {
-            minX: minX,
-            maxX: maxX,
-            minY: minY,
-            maxY: maxY
-        };
-    };
-
-
-  //**************************************************************************
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
     var checkSVG = bluewave.chart.utils.checkSVG;
     var isArray = bluewave.chart.utils.isArray;
     var initChart = bluewave.chart.utils.initChart;
+    var getMinMax = bluewave.chart.utils.getMinMax;
     var getColorRange = bluewave.chart.utils.getColorRange;
     var createTooltip = bluewave.chart.utils.createTooltip;
     var createKeyValueDataset = bluewave.chart.utils.createKeyValueDataset;

@@ -526,30 +526,6 @@ bluewave.charts.ScatterChart = function(parent, config) {
 
 
   //**************************************************************************
-  //** getMinMax
-  //**************************************************************************
-    var getMinMax = function(g){
-        var minX = Number.MAX_VALUE;
-        var maxX = 0;
-        var minY = Number.MAX_VALUE;
-        var maxY = 0;
-        g.selectAll("*").each(function(){
-            var rect = javaxt.dhtml.utils.getRect(d3.select(this).node());
-            minX = Math.min(rect.left, minX);
-            maxX = Math.max(rect.right, maxX);
-            minY = Math.min(rect.top, minY);
-            maxY = Math.max(rect.bottom, maxY);
-        });
-        return {
-            minX: minX,
-            maxX: maxX,
-            minY: minY,
-            maxY: maxY
-        };
-    };
-
-
-  //**************************************************************************
   //** Utils
   //**************************************************************************
     var merge = javaxt.dhtml.utils.merge;
@@ -560,6 +536,7 @@ bluewave.charts.ScatterChart = function(parent, config) {
     var getType = bluewave.chart.utils.getType;
     var getScale = bluewave.chart.utils.getScale;
     var drawAxes = bluewave.chart.utils.drawAxes;
+    var getMinMax = bluewave.chart.utils.getMinMax;
     var drawLabels = bluewave.chart.utils.drawLabels;
     var drawGridlines = bluewave.chart.utils.drawGridlines;
     var extendScale = bluewave.chart.utils.extendScale;

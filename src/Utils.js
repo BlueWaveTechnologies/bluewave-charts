@@ -1005,6 +1005,32 @@ bluewave.chart.utils = {
 
 
   //**************************************************************************
+  //** getMinMax
+  //**************************************************************************
+  /** Returns the dimension of all the elements in the chart
+   */
+    getMinMax: function(g){
+        var minX = Number.MAX_VALUE;
+        var maxX = 0;
+        var minY = Number.MAX_VALUE;
+        var maxY = 0;
+        g.selectAll("*").each(function(){
+            var rect = javaxt.dhtml.utils.getRect(d3.select(this).node());
+            minX = Math.min(rect.left, minX);
+            maxX = Math.max(rect.right, maxX);
+            minY = Math.min(rect.top, minY);
+            maxY = Math.max(rect.bottom, maxY);
+        });
+        return {
+            minX: minX,
+            maxX: maxX,
+            minY: minY,
+            maxY: maxY
+        };
+    },
+
+
+  //**************************************************************************
   //** getType
   //**************************************************************************
   /** Returns the data type associated with the given value (e.g. "string",
