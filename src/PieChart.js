@@ -377,10 +377,17 @@ bluewave.charts.PieChart = function(parent, config) {
 
 
       //Set fill colors
-        var colors = config.colors;
+        var colors = JSON.parse(JSON.stringify(config.colors));
         var numColors = hasOther ? numSlices-1 : numSlices;
-        if (numColors>config.colors.length){
+        if (numColors>colors.length){
+
+          //Extend range of colors
             colors = getColorRange(numColors, colors);
+        }
+        else{
+
+          //Reduce color options (important for rendering other)
+            colors = colors.slice(0, numColors);
         }
         if (hasOther) colors.push(config.otherColor);
 
